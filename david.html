@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fase 1 — El PC de David</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Share Tech Mono',monospace}
+
+/* ==================== INTRO SCENE ==================== */
+#intro{position:fixed;inset:0;background:#1a1a0a;z-index:999;overflow:hidden}
+
+/* Classroom background */
+#classroom-bg{position:absolute;inset:0}
+.classroom-wall{position:absolute;top:0;left:0;right:0;height:56%;background:linear-gradient(180deg,#f5e6c8 0%,#e8d5a8 100%)}
+.classroom-floor{position:absolute;bottom:0;left:0;right:0;height:44%;background:linear-gradient(180deg,#8b6914 0%,#6b4f0f 100%)}
+.blackboard{position:absolute;top:3%;left:50%;transform:translateX(-50%);width:52%;height:26%;background:#2d5a2d;border:8px solid #8b6914;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.blackboard-text{color:#90ee90;font-family:'VT323',monospace;font-size:clamp(14px,2vw,22px);text-align:center;line-height:1.4;text-shadow:0 0 6px rgba(0,255,0,0.4)}
+.window-sun{position:absolute;top:6%;right:6%;width:11%;height:19%;background:linear-gradient(135deg,#fffacd,#ffd700);border:6px solid #8b6914;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;padding:4px}
+.window-pane{background:rgba(135,206,235,0.6)}
+.desk-row{position:absolute;bottom:0;left:0;right:0;height:47%;display:flex;align-items:flex-end;justify-content:center;gap:4%}
+.desk-unit{display:flex;flex-direction:column;align-items:center;position:relative}
+.desk-surface{background:#c8941e;width:clamp(60px,8vw,90px);height:clamp(10px,1.5vw,18px);border-radius:3px 3px 0 0;border-top:3px solid #e8b44e}
+.desk-leg{width:clamp(50px,7vw,80px);height:clamp(20px,3vw,35px);background:#a07010;clip-path:polygon(5% 0,95% 0,88% 100%,12% 100%)}
+.student-figure{position:absolute;bottom:100%;display:flex;flex-direction:column;align-items:center}
+.poster{position:absolute;top:8%;left:3%;width:8%;height:13%;background:#fff8e8;border:2px solid #8b6914;display:flex;align-items:center;justify-content:center;font-size:clamp(8px,1vw,12px);color:#333;text-align:center;padding:2px}
+
+/* Intro UI overlay (title + button) — positioned BELOW the action */
+/* Título + botón flotando entre pizarra y profesor */
+#intro-ui{position:absolute;top:31%;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:20;pointer-events:none;width:max-content}
+#intro-title{font-family:'VT323',monospace;font-size:clamp(28px,4.8vw,58px);color:#ffdd44;text-shadow:3px 3px 0 #7a5500,0 0 18px rgba(255,200,0,0.7);letter-spacing:3px;text-align:center;animation:titleflicker 3s infinite;pointer-events:none;white-space:nowrap}
+@keyframes titleflicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:0.5}95%{opacity:1}97%{opacity:0.3}98%{opacity:1}}
+#intro-sub{color:#555;font-size:clamp(9px,1.2vw,13px);text-align:center;pointer-events:none;white-space:nowrap}
+#start-btn{pointer-events:all;background:#00cc55;color:#000;border:none;padding:clamp(6px,1vh,11px) clamp(20px,3.5vw,40px);font-family:'VT323',monospace;font-size:clamp(18px,2.6vw,28px);cursor:pointer;letter-spacing:3px;animation:btnpulse 1.5s infinite;position:relative;z-index:21;margin-top:2px}
+@keyframes btnpulse{0%,100%{box-shadow:0 0 0 0 rgba(0,200,80,0.7)}50%{box-shadow:0 0 0 12px rgba(0,200,80,0)}}
+#intro.fading{animation:introhide 1.4s ease forwards}
+@keyframes introhide{0%{opacity:1}100%{opacity:0;pointer-events:none}}
+
+/* David + PC area — centred in the classroom, clear of UI */
+#david-area{position:absolute;bottom:14%;left:50%;transform:translateX(-50%);width:360px;height:190px;display:flex;align-items:flex-end;justify-content:center;gap:10px}
+#david-svg{transform-origin:bottom center}
+
+/* Animation phases */
+#david-svg.phase-walk{animation:david-walk 0.8s ease forwards}
+@keyframes david-walk{0%{transform:translateX(0)}100%{transform:translateX(38px)}}
+
+#david-svg.phase-kick{animation:david-kick 0.55s ease forwards}
+@keyframes david-kick{
+  0%{transform:translateX(38px) rotate(0deg)}
+  40%{transform:translateX(52px) rotate(-8deg)}
+  70%{transform:translateX(64px) rotate(-14deg) scaleX(1.1)}
+  100%{transform:translateX(60px) rotate(-10deg)}
+}
+
+#david-svg.phase-recoil{animation:david-recoil 0.4s ease forwards}
+@keyframes david-recoil{
+  0%{transform:translateX(60px) rotate(-10deg)}
+  50%{transform:translateX(44px) rotate(4deg)}
+  100%{transform:translateX(48px) rotate(0deg)}
+}
+
+#pc-tower{transform-origin:bottom left}
+#pc-tower.hit{animation:pchit 0.6s ease}
+@keyframes pchit{
+  0%{transform:rotate(0) translateX(0)}
+  15%{transform:rotate(-14deg) translateX(10px)}
+  35%{transform:rotate(8deg) translateX(-5px)}
+  55%{transform:rotate(-5deg) translateX(4px)}
+  75%{transform:rotate(3deg)}
+  100%{transform:rotate(0) translateX(0)}
+}
+#pc-tower.smoking{animation:pchit 0.6s ease, pcsmoke 0.5s ease 0.6s forwards}
+@keyframes pcsmoke{0%{filter:none}100%{filter:brightness(0.5) sepia(1) hue-rotate(200deg)}}
+
+#sparks{position:absolute;bottom:30px;left:130px;font-size:44px;opacity:0;pointer-events:none}
+#sparks.show{opacity:1;animation:sparkle 0.5s ease}
+@keyframes sparkle{0%{transform:scale(0.3) rotate(-20deg)}60%{transform:scale(1.4) rotate(10deg)}100%{transform:scale(1) rotate(0deg)}}
+
+/* Speech bubble for David */
+#speech-bubble{position:absolute;background:#fff;border:3px solid #333;border-radius:12px;padding:5px 10px;font-family:'VT323',monospace;font-size:clamp(14px,1.8vw,20px);color:#333;white-space:nowrap;opacity:0;pointer-events:none;z-index:15;bottom:160px;left:50%;transform:translateX(-60px)}
+#speech-bubble::after{content:'';position:absolute;bottom:-12px;left:20px;border:6px solid transparent;border-top-color:#333}
+#speech-bubble::before{content:'';position:absolute;bottom:-9px;left:21px;border:5px solid transparent;border-top-color:#fff;z-index:1}
+#speech-bubble.show{opacity:1;animation:bubblepop 0.3s ease}
+@keyframes bubblepop{0%{transform:translateX(-60px) scale(0.7)}100%{transform:translateX(-60px) scale(1)}}
+
+/* Error screen flash on PC */
+#pc-error-flash{position:absolute;bottom:30px;right:70px;background:#ff0000;color:#fff;font-family:'VT323',monospace;font-size:14px;padding:4px 8px;border-radius:3px;opacity:0;pointer-events:none;z-index:15}
+#pc-error-flash.show{opacity:1;animation:errflash 0.4s step-end infinite}
+
+@keyframes errflash{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ==================== WINDOWS OS ==================== */
+#os{position:fixed;inset:0;display:none;flex-direction:column;background:#008080;overflow:hidden}
+#os.show{display:flex}
+
+/* Wallpaper scanlines */
+#os::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);pointer-events:none;z-index:0}
+
+/* Desktop area */
+#desktop{flex:1;position:relative;overflow:hidden;cursor:default}
+
+/* hint bar */
+#hint-bar{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#ffee55;font-size:clamp(9px,1.1vw,12px);padding:2px 10px;border-radius:3px;pointer-events:none;z-index:5;max-width:80%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Desktop icons */
+.dicon{display:flex;flex-direction:column;align-items:center;width:72px;cursor:pointer;padding:6px 4px;border-radius:3px;position:absolute;user-select:none;transition:background 0.1s}
+.dicon:hover{background:rgba(0,80,200,0.5)}
+.dicon-img{font-size:clamp(24px,3.5vw,36px);margin-bottom:3px}
+.dicon-label{color:#fff;font-size:clamp(9px,1vw,11px);text-align:center;text-shadow:1px 1px 2px #000;line-height:1.2;word-break:break-word}
+.corrupted{color:#ff4444;animation:cflick 0.8s infinite}
+@keyframes cflick{0%,100%{opacity:1}50%{opacity:0.6}}
+
+/* Windows */
+.wwin{position:absolute;background:#c0c0c0;border:2px solid #fff;border-right-color:#444;border-bottom-color:#444;box-shadow:2px 2px 0 #000;font-size:12px;min-width:180px;z-index:10;cursor:default;display:none}
+.wwin.open{display:block}
+.wtbar{background:linear-gradient(to right,#000080,#1084d0);color:#fff;padding:3px 5px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:bold;cursor:move;user-select:none;gap:4px;min-height:20px}
+.wtbar-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.wbtn-grp{display:flex;gap:2px;flex-shrink:0}
+.wbtn{background:#c0c0c0;color:#000;border:1px solid #fff;border-right-color:#444;border-bottom-color:#444;width:16px;height:14px;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0}
+.wbody{padding:10px 12px;background:#c0c0c0;color:#000;line-height:1.5;font-family:'Share Tech Mono',monospace;font-size:11px}
+.winbtn{background:#c0c0c0;border:2px solid #fff;border-right-color:#444;border-bottom-color:#444;padding:3px 14px;cursor:pointer;font-size:11px;font-family:'Share Tech Mono',monospace;margin:2px}
+.winbtn:active{border:2px solid #444;border-right-color:#fff;border-bottom-color:#fff}
+.menubar{background:#c0c0c0;border-bottom:1px solid #888;padding:1px 4px;font-size:11px;display:flex;gap:12px}
+.menubar span{cursor:pointer;padding:1px 4px}
+.menubar span:hover{background:#000080;color:#fff}
+
+/* Taskbar */
+#taskbar{position:absolute;bottom:0;left:0;right:0;height:30px;background:#c0c0c0;border-top:2px solid #fff;display:flex;align-items:center;padding:0 4px;gap:3px;z-index:50}
+#start-win{background:#c0c0c0;border:2px solid #fff;border-right-color:#444;border-bottom-color:#444;padding:2px 8px;font-size:12px;font-weight:bold;cursor:pointer;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;gap:4px;white-space:nowrap}
+#taskbar-items{display:flex;gap:3px;flex:1;overflow:hidden}
+.tbitem{background:#c0c0c0;border:2px solid #444;border-right-color:#fff;border-bottom-color:#fff;padding:1px 6px;font-size:10px;cursor:pointer;font-family:'Share Tech Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+#tclock{background:#c0c0c0;border:1px solid #888;padding:2px 8px;font-size:11px;font-family:'Share Tech Mono',monospace;flex-shrink:0}
+
+/* File list */
+.flist{background:#fff;border:2px inset #888;min-height:100px;padding:2px;overflow-y:auto;max-height:200px}
+.fitem{display:flex;align-items:center;gap:6px;padding:3px 4px;cursor:pointer;font-size:11px;font-family:'Share Tech Mono',monospace;white-space:nowrap}
+.fitem:hover{background:#000080;color:#fff}
+.fitem:hover .ficon{filter:none}
+.ficon{font-size:14px}
+
+/* Notepad textarea */
+.npad-area{width:100%;height:180px;resize:none;font-family:'Share Tech Mono',monospace;font-size:11px;background:#fff;border:2px inset #888;padding:4px;color:#000}
+
+/* Progress bar */
+.prog-bar{height:14px;background:#fff;border:2px inset #888;margin:6px 0;position:relative;overflow:hidden}
+.prog-fill{height:100%;background:#000080;transition:width 0.3s}
+
+/* Cisco app styles */
+#cisco-app{width:680px;min-height:460px;top:20px;left:80px;z-index:20}
+.cisco-header{background:#1d63a5;color:#fff;padding:6px 12px;font-size:13px;font-weight:bold;display:flex;align-items:center;gap:8px}
+.cisco-body{display:flex;height:380px;background:#f0f0f0}
+.cisco-sidebar{width:180px;background:#e0e0e0;border-right:1px solid #aaa;padding:4px;font-size:11px;overflow-y:auto}
+.cisco-main{flex:1;padding:8px;overflow-y:auto;font-size:11px}
+.cisco-tree-item{padding:3px 6px;cursor:pointer;border-radius:2px;display:flex;align-items:center;gap:4px;font-size:10px}
+.cisco-tree-item:hover{background:#c0d8f0}
+.cisco-tree-item.selected{background:#1d63a5;color:#fff}
+.cisco-panel{background:#fff;border:1px solid #ccc;padding:8px;margin-bottom:6px;font-size:10px}
+.cisco-panel h4{font-size:11px;color:#1d63a5;margin-bottom:4px;border-bottom:1px solid #ddd;padding-bottom:2px}
+.cisco-input{border:1px solid #888;padding:2px 4px;font-size:11px;font-family:'Share Tech Mono',monospace;width:120px;background:#fff}
+.cisco-input:focus{outline:1px solid #1d63a5}
+.cisco-btn{background:#1d63a5;color:#fff;border:1px solid #0a4a80;padding:3px 12px;font-size:11px;cursor:pointer;font-family:'Share Tech Mono',monospace}
+.cisco-btn:hover{background:#0a4a80}
+.cisco-label{display:inline-block;width:100px;font-weight:bold;color:#333}
+.cisco-row{display:flex;align-items:center;gap:6px;margin:3px 0;flex-wrap:wrap}
+.cisco-status{background:#001a00;color:#00ff44;padding:6px;font-size:10px;font-family:'Share Tech Mono',monospace;min-height:60px;line-height:1.6;border:1px solid #004400}
+.cisco-tab{padding:4px 10px;font-size:10px;cursor:pointer;border:1px solid #aaa;background:#ddd;display:inline-block;margin-right:2px}
+.cisco-tab.active{background:#fff;border-bottom-color:#fff;font-weight:bold}
+.cisco-tabs{border-bottom:1px solid #aaa;margin-bottom:6px}
+.cisco-device{width:48px;height:60px;display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:4px;border-radius:3px}
+.cisco-device:hover{background:#c0d8f0}
+.cisco-device-img{font-size:28px;margin-bottom:2px}
+.cisco-topology{background:#fff;border:1px solid #ccc;min-height:200px;position:relative;overflow:hidden}
+.cisco-wire{position:absolute;background:#555;pointer-events:none}
+.cisco-dev-node{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;width:56px}
+.cisco-dev-node:hover .cisco-dev-box{border-color:#1d63a5}
+.cisco-dev-box{border:2px solid #999;background:#eee;border-radius:3px;padding:4px;font-size:20px;text-align:center}
+.cisco-dev-label{font-size:9px;text-align:center;color:#333;margin-top:2px}
+.cisco-port-table{width:100%;border-collapse:collapse;font-size:10px}
+.cisco-port-table th{background:#1d63a5;color:#fff;padding:3px 6px;text-align:left}
+.cisco-port-table td{border:1px solid #ddd;padding:3px 6px}
+.cisco-port-table tr:nth-child(even){background:#f5f5f5}
+.vlan-status-ok{color:#006600;font-weight:bold}
+.vlan-status-err{color:#cc0000;font-weight:bold}
+
+/* BSOD */
+#bsod{position:fixed;inset:0;background:#000080;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:999;font-family:'Share Tech Mono',monospace;color:#fff;text-align:center;padding:20px}
+#bsod.show{display:flex;animation:bsodflash 0.3s}
+@keyframes bsodflash{0%{opacity:0}100%{opacity:1}}
+.bsod-title{font-size:clamp(20px,4vw,40px);font-weight:bold;margin-bottom:20px;font-family:'VT323',monospace;color:#fff;letter-spacing:2px}
+.bsod-code{font-size:clamp(12px,1.8vw,18px);margin:8px 0;color:#c0c0c0}
+.bsod-num{font-size:clamp(60px,12vw,120px);font-family:'VT323',monospace;color:#00ff88;animation:numpulse 1s infinite}
+@keyframes numpulse{0%,100%{text-shadow:0 0 20px #00ff88}50%{text-shadow:0 0 60px #00ff88,0 0 100px #00ff88}}
+.bsod-sub{font-size:clamp(12px,1.8vw,16px);color:#aaffdd;margin:10px 0}
+.bsod-restart{background:transparent;border:2px solid #00ff88;color:#00ff88;padding:10px 30px;font-family:'VT323',monospace;font-size:24px;cursor:pointer;margin-top:20px;animation:btnpulse 1.5s infinite}
+.bsod-restart:hover{background:#00ff8822}
+
+/* Error/popup bounce */
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.shake{animation:shake 0.4s}
+
+/* fake loading bar anim */
+@keyframes loadfill{from{width:0}to{width:100%}}
+
+/* Trap app */
+#trap-app{width:340px;top:60px;left:180px;z-index:18}
+#snake-app{width:320px;top:40px;left:120px;z-index:18}
+.snake-canvas{background:#000;border:2px inset #444;display:block;cursor:crosshair}
+#media-app{width:380px;top:50px;left:100px;z-index:18}
+#calculator-app{width:220px;top:80px;left:200px;z-index:18}
+.calc-display{background:#c8ffc8;border:2px inset #888;padding:4px 8px;text-align:right;font-size:18px;font-family:'Share Tech Mono',monospace;color:#003300;margin-bottom:4px;min-height:30px}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+.calc-key{background:#c0c0c0;border:2px solid #fff;border-right-color:#444;border-bottom-color:#444;padding:6px;cursor:pointer;text-align:center;font-size:13px;font-family:'Share Tech Mono',monospace;user-select:none}
+.calc-key:active{border:2px solid #444;border-right-color:#fff;border-bottom-color:#fff}
+.calc-key.op{background:#b0b0b0}
+.calc-key.eq{background:#000080;color:#fff}
+
+/* Start menu */
+#start-menu{position:absolute;bottom:30px;left:0;width:200px;background:#c0c0c0;border:2px solid #fff;border-right-color:#444;border-bottom-color:#444;box-shadow:2px 2px 4px rgba(0,0,0,0.5);display:none;z-index:100}
+#start-menu.open{display:block}
+.smitem{padding:5px 10px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px}
+.smitem:hover{background:#000080;color:#fff}
+.smitem-sep{height:1px;background:#888;margin:2px 0}
+
+/* Tooltip */
+#tooltip{position:fixed;background:#ffffc0;border:1px solid #888;padding:2px 6px;font-size:10px;pointer-events:none;z-index:9999;display:none;font-family:'Share Tech Mono',monospace}
+
+/* Right-click menu */
+#rclick-menu{position:absolute;background:#c0c0c0;border:2px solid #fff;border-right-color:#444;border-bottom-color:#444;box-shadow:2px 2px 4px rgba(0,0,0,0.5);font-size:11px;z-index:200;display:none;min-width:150px}
+#rclick-menu.open{display:block}
+.rcitem{padding:4px 12px;cursor:pointer;font-family:'Share Tech Mono',monospace}
+.rcitem:hover{background:#000080;color:#fff}
+.rcitem-sep{height:1px;background:#888;margin:2px 0}
+</style>
+</head>
+<body>
+
+<!-- ==================== INTRO SCENE ==================== -->
+<div id="intro">
+  <!-- Classroom background -->
+  <div id="classroom-bg">
+    <div class="classroom-wall"></div>
+    <div class="classroom-floor"></div>
+
+    <!-- Blackboard -->
+    <div class="blackboard">
+      <div class="blackboard-text">
+        🖥️ REDES Y SISTEMAS<br>
+        <span style="font-size:0.8em;color:#88cc88">Tema 4: VLANs y Switching</span><br>
+        <span style="font-size:0.7em;color:#66aa66">— ¡EXAMEN VIERNES! —</span>
+      </div>
+    </div>
+
+    <!-- Window with sun -->
+    <div class="window-sun">
+      <div class="window-pane"></div><div class="window-pane"></div>
+      <div class="window-pane"></div><div class="window-pane"></div>
+    </div>
+
+    <!-- Posters on wall -->
+    <div class="poster" style="top:10%;left:3%;width:7%;height:13%;background:#ffe8e8;border:2px solid #8b6914;font-size:8px;color:#333;display:flex;align-items:center;justify-content:center;text-align:center;padding:2px">OSI<br>MODEL</div>
+    <div class="poster" style="top:10%;left:11%;width:7%;height:13%;background:#e8f0ff;border:2px solid #8b6914;font-size:7px;color:#333;display:flex;align-items:center;justify-content:center;text-align:center;padding:2px">TCP/IP<br>STACK</div>
+
+    <!-- Teacher desk area -->
+    <div style="position:absolute;bottom:43%;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center">
+      <!-- Teacher stick figure -->
+      <svg width="50" height="80" viewBox="0 0 50 80" style="margin-bottom:-2px">
+        <circle cx="25" cy="12" r="8" fill="#f0c080" stroke="#333" stroke-width="1.5"/>
+        <rect x="17" y="20" width="16" height="22" rx="2" fill="#884400"/>
+        <line x1="17" y1="28" x2="6" y2="38" stroke="#f0c080" stroke-width="2" stroke-linecap="round"/>
+        <line x1="33" y1="28" x2="44" y2="38" stroke="#f0c080" stroke-width="2" stroke-linecap="round"/>
+        <line x1="21" y1="42" x2="18" y2="60" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+        <line x1="29" y1="42" x2="32" y2="60" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+        <text x="25" y="76" text-anchor="middle" font-size="8" fill="#ffdd44" font-family="'VT323',monospace">PROFE</text>
+      </svg>
+      <div style="background:#c8941e;width:90px;height:12px;border-radius:3px 3px 0 0;border-top:3px solid #e8b44e"></div>
+      <div style="width:80px;height:22px;background:#a07010;clip-path:polygon(5% 0,95% 0,88% 100%,12% 100%)"></div>
+    </div>
+
+    <!-- Student desks row -->
+    <div class="desk-row">
+      <!-- Student 1 -->
+      <div class="desk-unit">
+        <div class="student-figure">
+          <svg width="30" height="55" viewBox="0 0 30 55" style="margin-bottom:-2px">
+            <circle cx="15" cy="10" r="7" fill="#ffd09a" stroke="#333" stroke-width="1.5"/>
+            <rect x="9" y="17" width="12" height="16" rx="2" fill="#3355aa"/>
+            <line x1="9" y1="22" x2="2" y2="30" stroke="#ffd09a" stroke-width="2"/>
+            <line x1="21" y1="22" x2="28" y2="28" stroke="#ffd09a" stroke-width="2"/>
+            <line x1="13" y1="33" x2="11" y2="48" stroke="#333" stroke-width="1.5"/>
+            <line x1="17" y1="33" x2="19" y2="48" stroke="#333" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="desk-surface" style="width:70px"></div>
+        <div class="desk-leg" style="width:60px"></div>
+      </div>
+      <!-- Student 2 -->
+      <div class="desk-unit">
+        <div class="student-figure">
+          <svg width="30" height="55" viewBox="0 0 30 55" style="margin-bottom:-2px">
+            <circle cx="15" cy="10" r="7" fill="#f5c0a0" stroke="#333" stroke-width="1.5"/>
+            <path d="M8 8 Q15 2 22 8" fill="#3a1a00" stroke="#3a1a00" stroke-width="2"/>
+            <rect x="9" y="17" width="12" height="16" rx="2" fill="#aa3333"/>
+            <line x1="9" y1="22" x2="2" y2="30" stroke="#f5c0a0" stroke-width="2"/>
+            <line x1="21" y1="22" x2="28" y2="28" stroke="#f5c0a0" stroke-width="2"/>
+            <line x1="13" y1="33" x2="11" y2="48" stroke="#333" stroke-width="1.5"/>
+            <line x1="17" y1="33" x2="19" y2="48" stroke="#333" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="desk-surface" style="width:70px"></div>
+        <div class="desk-leg" style="width:60px"></div>
+      </div>
+      <!-- DAVID desk - center -->
+      <div class="desk-unit" id="david-desk-unit">
+        <div id="david-area" style="position:relative;width:200px;height:160px;display:flex;align-items:flex-end;justify-content:center;gap:8px">
+          <!-- David -->
+          <svg id="david-svg" width="90" height="140" viewBox="0 0 90 140" style="flex-shrink:0">
+            <circle cx="30" cy="18" r="13" fill="#f5c0a0" stroke="#333" stroke-width="2"/>
+            <path d="M17 13 Q30 4 43 13" fill="#2a0e00" stroke="#2a0e00" stroke-width="3" stroke-linecap="round"/>
+            <line x1="30" y1="31" x2="30" y2="72" stroke="#333" stroke-width="3"/>
+            <line x1="30" y1="45" x2="8" y2="58" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="30" y1="45" x2="52" y2="40" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="30" y1="72" x2="16" y2="105" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+            <g id="kick-leg">
+              <line x1="30" y1="72" x2="48" y2="90" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="48" y1="90" x2="78" y2="78" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+              <ellipse cx="80" cy="76" rx="9" ry="5" fill="#222" transform="rotate(-20,80,76)"/>
+            </g>
+            <rect x="22" y="32" width="16" height="30" rx="3" fill="#2266cc" opacity="0.7"/>
+            <text x="30" y="128" text-anchor="middle" font-size="12" fill="#ffdd44" font-family="'VT323',monospace">DAVID</text>
+          </svg>
+          <!-- PC tower -->
+          <svg id="pc-tower" width="75" height="110" viewBox="0 0 75 110" style="flex-shrink:0">
+            <rect x="5" y="5" width="60" height="90" rx="4" fill="#d8d8d8" stroke="#888" stroke-width="2"/>
+            <rect x="12" y="12" width="46" height="32" rx="2" fill="#0a0a1e" stroke="#666"/>
+            <circle cx="14" cy="58" r="4" fill="#ff2200" id="pc-light"/>
+            <circle cx="26" cy="58" r="4" fill="#ff8800"/>
+            <rect x="12" y="66" width="38" height="7" rx="1" fill="#999" stroke="#666"/>
+            <rect x="12" y="77" width="38" height="7" rx="1" fill="#999" stroke="#666"/>
+            <rect x="2" y="95" width="70" height="10" rx="3" fill="#bbb" stroke="#888" stroke-width="1.5"/>
+            <text x="35" y="24" text-anchor="middle" font-size="6" fill="#00ff00" font-family="monospace">C:\></text>
+            <text x="35" y="32" text-anchor="middle" font-size="5" fill="#00ff00" font-family="monospace">BOOT...</text>
+            <text x="35" y="40" text-anchor="middle" font-size="5" fill="#ff4444" font-family="monospace">!! ERROR !!</text>
+          </svg>
+          <!-- Sparks -->
+          <div id="sparks" style="position:absolute;bottom:20px;left:110px;font-size:40px;opacity:0;pointer-events:none">💥</div>
+        </div>
+        <div class="desk-surface" style="width:80px"></div>
+        <div class="desk-leg" style="width:70px"></div>
+      </div>
+      <!-- Student 4 -->
+      <div class="desk-unit">
+        <div class="student-figure">
+          <svg width="30" height="55" viewBox="0 0 30 55" style="margin-bottom:-2px">
+            <circle cx="15" cy="10" r="7" fill="#c8a060" stroke="#333" stroke-width="1.5"/>
+            <rect x="9" y="17" width="12" height="16" rx="2" fill="#227722"/>
+            <line x1="9" y1="22" x2="2" y2="30" stroke="#c8a060" stroke-width="2"/>
+            <line x1="21" y1="22" x2="28" y2="28" stroke="#c8a060" stroke-width="2"/>
+            <line x1="13" y1="33" x2="11" y2="48" stroke="#333" stroke-width="1.5"/>
+            <line x1="17" y1="33" x2="19" y2="48" stroke="#333" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="desk-surface" style="width:70px"></div>
+        <div class="desk-leg" style="width:60px"></div>
+      </div>
+      <!-- Student 5 -->
+      <div class="desk-unit">
+        <div class="student-figure">
+          <svg width="30" height="55" viewBox="0 0 30 55" style="margin-bottom:-2px">
+            <circle cx="15" cy="10" r="7" fill="#f0c080" stroke="#333" stroke-width="1.5"/>
+            <rect x="9" y="17" width="12" height="16" rx="2" fill="#885500"/>
+            <line x1="9" y1="22" x2="2" y2="30" stroke="#f0c080" stroke-width="2"/>
+            <line x1="21" y1="22" x2="28" y2="28" stroke="#f0c080" stroke-width="2"/>
+            <line x1="13" y1="33" x2="11" y2="48" stroke="#333" stroke-width="1.5"/>
+            <line x1="17" y1="33" x2="19" y2="48" stroke="#333" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="desk-surface" style="width:70px"></div>
+        <div class="desk-leg" style="width:60px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Speech bubble sobre David -->
+  <div id="speech-bubble">¡Toma ya!</div>
+  <!-- PC error flash -->
+  <div id="pc-error-flash">!! ERROR !!</div>
+
+  <!-- Barra inferior: título + botón SIN tapar la escena -->
+  <div id="intro-ui">
+    <div id="intro-title">⚡ EL PC DE DAVID ⚡</div>
+    <div id="intro-sub">David ha vuelto a cargarse el PC del aula. El profe no está contento.</div>
+    <button id="start-btn" onclick="startIntro()">▶ INICIAR MISIÓN</button>
+  </div>
+</div>
+
+<!-- ==================== WINDOWS DESKTOP ==================== -->
+<div id="os">
+  <div id="desktop">
+    <!-- Scanlines overlay -->
+    <div style="position:absolute;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px)"></div>
+
+    <!-- Desktop icons -->
+    <div class="dicon" style="left:10px;top:20px" ondblclick="openMyPC()" title="Mi PC">
+      <div class="dicon-img">🖥️</div><div class="dicon-label">Mi PC</div>
+    </div>
+    <div class="dicon" style="left:10px;top:108px" ondblclick="openRecycleBin()">
+      <div class="dicon-img">🗑️</div><div class="dicon-label">Papelera</div>
+    </div>
+    <div class="dicon" style="left:10px;top:196px" ondblclick="openDocs()">
+      <div class="dicon-img">📁</div><div class="dicon-label">Mis Documentos</div>
+    </div>
+    <div class="dicon" style="left:10px;top:284px" ondblclick="openVirus()">
+      <div class="dicon-img">⚠️</div><div class="dicon-label corrupted">VIRUS_XP.exe</div>
+    </div>
+    <div class="dicon" style="left:92px;top:20px" ondblclick="openCisco()">
+      <div class="dicon-img">🔵</div><div class="dicon-label">Cisco Packet Tracer</div>
+    </div>
+    <div class="dicon" style="left:92px;top:108px" ondblclick="openCalculator()">
+      <div class="dicon-img">🧮</div><div class="dicon-label">Calculadora</div>
+    </div>
+    <div class="dicon" style="left:92px;top:196px" ondblclick="openMedia()">
+      <div class="dicon-img">🎵</div><div class="dicon-label">Windows Media Player</div>
+    </div>
+    <div class="dicon" style="left:92px;top:284px" ondblclick="openPaint()">
+      <div class="dicon-img">🎨</div><div class="dicon-label">Paint</div>
+    </div>
+    <div class="dicon" style="left:174px;top:20px" ondblclick="openIE()">
+      <div class="dicon-img">🌐</div><div class="dicon-label">Internet Explorer</div>
+    </div>
+    <div class="dicon" style="left:174px;top:108px" ondblclick="openMsConfig()">
+      <div class="dicon-img">⚙️</div><div class="dicon-label">msconfig.exe</div>
+    </div>
+    <div class="dicon" style="left:174px;top:196px" ondblclick="openDevice()">
+      <div class="dicon-img">🔌</div><div class="dicon-label">Administrador de Dispositivos</div>
+    </div>
+    <div class="dicon" style="left:174px;top:284px" ondblclick="openGame()">
+      <div class="dicon-img">🐍</div><div class="dicon-label">Snake.exe</div>
+    </div>
+
+    <!-- Hint bar -->
+    <div id="hint-bar">🔍 Explora el escritorio de David para encontrar el número secreto...</div>
+
+    <!-- ===== WINDOWS ===== -->
+
+    <!-- Error popup -->
+    <div id="error-win" class="wwin" style="right:20px;top:40px;width:260px;z-index:30">
+      <div class="wtbar" onmousedown="dragStart(event,'error-win')">
+        <span class="wtbar-title">⚠️ Error del sistema</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="closeWin('error-win')">✕</div></div>
+      </div>
+      <div class="wbody" style="font-size:11px">
+        <div style="color:#800000;font-weight:bold">KERNEL_PANIC_0x000000D4</div>
+        <div style="margin:6px 0">El disco duro está más corrupto que los apuntes de David.</div>
+        <div style="color:#555;font-size:10px">Abre <strong>Cisco Packet Tracer</strong> para diagnosticar la red...</div>
+        <div style="text-align:center;margin-top:8px">
+          <button class="winbtn" onclick="closeWin('error-win')">OK</button>
+          <button class="winbtn" onclick="closeWin('error-win')">Ignorar (mala idea)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Virus window -->
+    <div id="virus-win" class="wwin" style="width:270px;top:90px;left:60px;z-index:25">
+      <div class="wtbar" style="background:linear-gradient(to right,#800000,#cc0000)" onmousedown="dragStart(event,'virus-win')">
+        <span class="wtbar-title">🦠 VIRUS_XP.exe — EN EJECUCIÓN</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="closeWin('virus-win')">✕</div></div>
+      </div>
+      <div class="wbody">
+        <div class="corrupted" style="font-size:13px;font-weight:bold">⚠️ SISTEMA INFECTADO</div>
+        <div style="margin:6px 0;font-size:10px">El PC de David tiene el <em>virus del año 2003</em>.<br>
+        Ha corrompido todos los archivos <em>excepto uno</em>.</div>
+        <div style="color:#800000;font-size:10px">Pista: <strong>el número está en una red VLAN</strong>.<br>
+        Alguien lo configuró en el switch del laboratorio...</div>
+        <div style="text-align:center;margin-top:8px">
+          <button class="winbtn" onclick="closeWin('virus-win')">Cerrar</button>
+          <button class="winbtn" onclick="openDocs()">📁 Buscar archivos</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mi PC / Mis Documentos -->
+    <div id="docs-win" class="wwin" style="width:340px;top:50px;left:50px">
+      <div class="wtbar" onmousedown="dragStart(event,'docs-win')">
+        <span class="wtbar-title">📁 Explorador — Mis Documentos</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="minimizeWin('docs-win')">_</div><div class="wbtn" onclick="closeWin('docs-win')">✕</div></div>
+      </div>
+      <div class="menubar"><span>Archivo</span><span>Editar</span><span>Ver</span><span>Herramientas</span></div>
+      <div class="wbody" style="padding:6px">
+        <div style="background:#000080;color:#fff;padding:3px 6px;font-size:10px;margin-bottom:4px">📂 C:\Documentos y Configuración\David\Mis documentos</div>
+        <div class="flist">
+          <div class="fitem" ondblclick="openNotepad('tarea_mates.txt','DEBERES DE MATES\n================\n\n2x + 5 = 13\nx = ??? (no sé, copio al lado)\n\nSistema de ecuaciones:\na + b = 10\na - b = 4\n\nSolución: a=7, b=3\n(número secreto: ¿736? No, eso no cuadra)\n\nEntrega mañana. Dios mío.')">
+            <span class="ficon">📄</span> tarea_mates.txt
+          </div>
+          <div class="fitem" ondblclick="openNotepad('notas_examen.txt','NOTAS DEL TRIMESTRE\n===================\n\nMatemáticas: 4/10\nLengua: 5/10\nRedes: 7/10 (¡la única que apruebo!)\nFísica: 3/10\n\nMedia: 4.75 — SUSPENSO\n\nComentario profe: \"David, si pasaras\nmenos tiempo dando patadas al PC\ny más estudiando...\"\n\nNota al pie: el número del que hablan\nno está aquí. Busca en otro sitio.')">
+            <span class="ficon">📄</span> notas_examen.txt
+          </div>
+          <div class="fitem" ondblclick="openNotepad('contrasenas.txt','CONTRASEÑAS (NO ABRIR)\n======================\n\nWiFi del cole: Colegio2024!\nInstagram: david_pro_gamer_xd\nContraseña del PC: 1234\n\n(Sí, sigo usando 1234)\n\nContraseña de la VLAN de redes...\njp... no, eso está en el Cisco\nno aquí, listo.\n\nPD: si encuentras esto, ciérralo.')">
+            <span class="ficon">📄</span> contrasenas.txt
+          </div>
+          <div class="fitem" ondblclick="openNotepad('lista_musica.txt','PLAYLIST DAVID 2024\n===================\n\n1. Bad Bunny - Titi me preguntó\n2. Bizarrap - Session 53\n3. Quevedo - Columbia\n4. ... (50 canciones más)\n\nNúmero favorito: no te digo\nColorinche: tampoco\n\nDato: el número que buscas\nno está en mis canciones.')">
+            <span class="ficon">📝</span> lista_musica.txt
+          </div>
+          <div class="fitem" ondblclick="openNotepad('README_TRAMPA.txt','¡TE HAN ENGAÑADO!\n==================\n\nEste archivo no tiene nada.\nEl número NO está en Mis Documentos.\n\nPista real: abre CISCO PACKET TRACER\nque está en el escritorio.\n\nTienes que configurar una VLAN\nen el switch para descubrirlo.\n\n¿Sabes lo que es una VLAN? 🤔\n\n(El número está codificado en la red)')">
+            <span class="ficon">📋</span> README_TRAMPA.txt
+          </div>
+          <div class="fitem" ondblclick="openNotepad('proyecto_cisco.txt','PROYECTO FINAL REDES\n====================\n\nTema: Segmentación con VLANs\nAlumno: David García\nNota: pendiente de entrega\n\nTopología:\n- 1 Switch Cisco 2960\n- 2 PCs (PC1 y PC2)\n- VLAN 10: Administración\n- VLAN 20: Datos\n\nCONFIGURACIÓN PENDIENTE:\nAsignar puerto Fa0/1 a VLAN_ID=???\nel número que falta = CÓDIGO SECRETO\n\nVer Cisco Packet Tracer para completar.')">
+            <span class="ficon">🗒️</span> proyecto_cisco.txt
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notepad -->
+    <div id="notepad-win" class="wwin" style="width:360px;top:60px;left:120px;z-index:16">
+      <div class="wtbar" onmousedown="dragStart(event,'notepad-win')">
+        <span class="wtbar-title" id="npad-title">📝 Bloc de notas</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="minimizeWin('notepad-win')">_</div><div class="wbtn" onclick="closeWin('notepad-win')">✕</div></div>
+      </div>
+      <div class="menubar"><span>Archivo</span><span>Editar</span><span>Formato</span><span>Ayuda</span></div>
+      <div class="wbody" style="padding:2px">
+        <textarea id="npad-content" class="npad-area" readonly></textarea>
+      </div>
+    </div>
+
+    <!-- Recycle bin -->
+    <div id="recycle-win" class="wwin" style="width:300px;top:70px;left:80px">
+      <div class="wtbar" onmousedown="dragStart(event,'recycle-win')">
+        <span class="wtbar-title">🗑️ Papelera de reciclaje</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="closeWin('recycle-win')">✕</div></div>
+      </div>
+      <div class="wbody">
+        <div style="font-size:10px;color:#555;margin-bottom:6px">Archivos eliminados (no recuperables):</div>
+        <div class="flist">
+          <div class="fitem" ondblclick="openNotepad('deberes_borrados.txt','(archivo corrupto)\n\n░░▓▓▒▒▓▓░░▒▒\n\nEste archivo fue eliminado.\nNo contiene el número.\n\n(Lo borré aposta)')"><span class="ficon">🗑️</span> deberes_del_lunes.txt</div>
+          <div class="fitem" ondblclick="openNotepad('foto_borrada.txt','[IMAGEN_JPEG_CORRUPTA]\n\nNo se puede mostrar.\nEra una foto del examen\nde mates (sacada a escondidas).\n\nEl número que buscas\nno es el de ninguna nota.')"><span class="ficon">🖼️</span> foto_examen_copiada.jpg</div>
+          <div class="fitem" ondblclick="openNotepad('trampa_cisco.txt','PISTA IMPORTANTE:\n=================\n\nBuscas el número en sitios equivocados.\n\nABRE CISCO PACKET TRACER.\nEstá en el escritorio.\n\nCrea una VLAN nueva en el switch.\nAsígnale el ID correcto.\n\nCuando lo hagas bien,\nel PC se reparará solo. 🔧')"><span class="ficon">📋</span> pista_importante.txt</div>
+        </div>
+        <div style="text-align:center;margin-top:8px"><button class="winbtn" onclick="closeWin('recycle-win')">Cerrar</button></div>
+      </div>
+    </div>
+
+    <!-- Internet Explorer (trap) -->
+    <div id="ie-win" class="wwin" style="width:460px;top:40px;left:100px;z-index:18">
+      <div class="wtbar" onmousedown="dragStart(event,'ie-win')">
+        <span class="wtbar-title">🌐 Microsoft Internet Explorer</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="minimizeWin('ie-win')">_</div><div class="wbtn" onclick="closeWin('ie-win')">✕</div></div>
+      </div>
+      <div class="menubar"><span>Archivo</span><span>Editar</span><span>Ver</span><span>Favoritos</span><span>Herramientas</span></div>
+      <div style="background:#c0c0c0;padding:3px 6px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #888">
+        <button class="winbtn" style="padding:2px 6px">◀</button>
+        <button class="winbtn" style="padding:2px 6px">▶</button>
+        <input style="flex:1;border:2px inset #888;padding:2px 4px;font-size:11px;font-family:'Share Tech Mono',monospace;background:#fff" value="http://www.google.es" id="ie-url">
+        <button class="winbtn" onclick="ieNavigate()">Ir</button>
+      </div>
+      <div id="ie-body" class="wbody" style="min-height:200px;background:#fff;color:#000;padding:16px">
+        <div style="text-align:center;padding:20px 0">
+          <div style="font-size:28px;font-weight:bold;color:#4285f4">G</div>
+          <div style="font-size:28px;font-weight:bold;display:inline"><span style="color:#ea4335">o</span><span style="color:#fbbc05">o</span><span style="color:#4285f4">g</span><span style="color:#34a853">l</span><span style="color:#ea4335">e</span></div>
+          <div style="margin:10px 0;font-size:11px;color:#555">Página de inicio — Internet Explorer 6.0</div>
+          <div style="background:#fffbe0;border:1px solid #e0c000;padding:6px 10px;font-size:10px;max-width:300px;margin:0 auto;text-align:left">
+            ⚠️ <strong>Advertencia de seguridad</strong><br>
+            Esta página contiene elementos no seguros.<br>
+            El número secreto NO está en internet.<br>
+            Prueba con <strong>Cisco Packet Tracer</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- msconfig (trap) -->
+    <div id="msconfig-win" class="wwin" style="width:360px;top:60px;left:140px;z-index:18">
+      <div class="wtbar" onmousedown="dragStart(event,'msconfig-win')">
+        <span class="wtbar-title">⚙️ Configuración del sistema (msconfig)</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="closeWin('msconfig-win')">✕</div></div>
+      </div>
+      <div class="wbody">
+        <div class="cisco-tabs">
+          <span class="cisco-tab active">General</span><span class="cisco-tab">Inicio</span><span class="cisco-tab">Servicios</span><span class="cisco-tab">Arranque</span>
+        </div>
+        <div style="font-size:11px">
+          <div style="margin:4px 0"><input type="radio" checked> Inicio normal — cargar todos los dispositivos</div>
+          <div style="margin:4px 0"><input type="radio"> Inicio diagnóstico — servicios básicos</div>
+          <div style="margin:4px 0"><input type="radio"> Inicio selectivo</div>
+        </div>
+        <div style="background:#ffe0e0;border:1px solid #cc0000;padding:6px;margin:8px 0;font-size:10px">
+          ❌ Error: NTLDR está corrupto. El sistema no puede arrancar correctamente.<br>
+          Código: <strong>0x0000007B</strong><br>
+          Dato curioso: este código no es el número que buscas.
+        </div>
+        <div style="text-align:center">
+          <button class="winbtn">Aceptar</button><button class="winbtn" onclick="closeWin('msconfig-win')">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Device manager (trap) -->
+    <div id="device-win" class="wwin" style="width:340px;top:50px;left:120px;z-index:18">
+      <div class="wtbar" onmousedown="dragStart(event,'device-win')">
+        <span class="wtbar-title">🔌 Administrador de dispositivos</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="closeWin('device-win')">✕</div></div>
+      </div>
+      <div class="wbody" style="padding:4px">
+        <div class="flist" style="max-height:240px">
+          <div class="fitem"><span class="ficon">💻</span> <span style="color:#006600">▶ Equipo</span></div>
+          <div class="fitem"><span class="ficon">🖥️</span> Adaptadores de pantalla</div>
+          <div class="fitem"><span class="ficon">💿</span> Unidades de disco</div>
+          <div class="fitem"><span class="ficon" style="color:#cc0000">⚠️</span> <span style="color:#cc0000">Adaptadores de red — ¡ERROR!</span></div>
+          <div class="fitem" ondblclick="openNotepad('driver_error.txt','ERROR ADAPTADOR DE RED\n======================\n\nDispositivo: Realtek RTL8139\nEstado: Código 10 — El dispositivo no puede iniciarse\n\nDatos del error:\nLa tarjeta de red de David\nfuncionaba perfectamente antes\nde que le diera una patada al PC.\n\nPOSIBLE SOLUCIÓN:\nConfigurar correctamente la VLAN\nen Cisco Packet Tracer.\nEso arreglará la red virtual.')">
+            <span class="ficon">↳</span> Realtek RTL8139 — Código 10
+          </div>
+          <div class="fitem"><span class="ficon">🔊</span> Controladores de sonido</div>
+          <div class="fitem"><span class="ficon">⌨️</span> Teclados</div>
+          <div class="fitem"><span class="ficon">🖱️</span> Ratones</div>
+          <div class="fitem"><span class="ficon" style="color:#cc8800">⚠️</span> <span style="color:#cc8800">Puerto USB — Sin controlador</span></div>
+        </div>
+        <div style="text-align:center;margin-top:6px"><button class="winbtn" onclick="closeWin('device-win')">Cerrar</button></div>
+      </div>
+    </div>
+
+    <!-- Paint (trap) -->
+    <div id="paint-win" class="wwin" style="width:400px;top:40px;left:80px;z-index:18">
+      <div class="wtbar" onmousedown="dragStart(event,'paint-win')">
+        <span class="wtbar-title">🎨 Paint — sin título</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="minimizeWin('paint-win')">_</div><div class="wbtn" onclick="closeWin('paint-win')">✕</div></div>
+      </div>
+      <div class="menubar"><span>Archivo</span><span>Editar</span><span>Ver</span><span>Imagen</span><span>Colores</span></div>
+      <div style="background:#808080;padding:4px;display:flex;gap:4px;border-bottom:1px solid #444">
+        <span style="background:#c0c0c0;border:2px solid #fff;border-right-color:#444;border-bottom-color:#444;padding:2px 6px;font-size:10px">✏️</span>
+        <span style="background:#c0c0c0;border:2px solid #fff;border-right-color:#444;border-bottom-color:#444;padding:2px 6px;font-size:10px">🪣</span>
+        <span style="background:#c0c0c0;border:2px solid #fff;border-right-color:#444;border-bottom-color:#444;padding:2px 6px;font-size:10px">T</span>
+      </div>
+      <canvas id="paint-canvas" width="380" height="200" style="background:#fff;cursor:crosshair;display:block"></canvas>
+      <div style="background:#c0c0c0;padding:2px 6px;font-size:10px;border-top:1px solid #888;display:flex;gap:8px">
+        <span id="paint-coords">0, 0</span>
+        <span>|</span>
+        <span>📝 Pista: el número no está aquí, dibuja lo que quieras</span>
+      </div>
+    </div>
+
+    <!-- Calculator (trap with fake code) -->
+    <div id="calc-win" class="wwin" style="width:220px;top:80px;left:200px;z-index:18">
+      <div class="wtbar" onmousedown="dragStart(event,'calc-win')">
+        <span class="wtbar-title">🧮 Calculadora</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="closeWin('calc-win')">✕</div></div>
+      </div>
+      <div class="wbody" style="padding:6px">
+        <div class="calc-display" id="calc-display">0</div>
+        <div style="font-size:9px;color:#555;margin-bottom:4px">Código trampa: <span id="fake-code" style="color:#cc0000;font-weight:bold">????</span></div>
+        <div class="calc-grid">
+          <button class="calc-key op" onclick="calcKey('C')">C</button>
+          <button class="calc-key op" onclick="calcKey('±')">±</button>
+          <button class="calc-key op" onclick="calcKey('%')">%</button>
+          <button class="calc-key op" onclick="calcKey('÷')">÷</button>
+          <button class="calc-key" onclick="calcKey('7')">7</button>
+          <button class="calc-key" onclick="calcKey('8')">8</button>
+          <button class="calc-key" onclick="calcKey('9')">9</button>
+          <button class="calc-key op" onclick="calcKey('×')">×</button>
+          <button class="calc-key" onclick="calcKey('4')">4</button>
+          <button class="calc-key" onclick="calcKey('5')">5</button>
+          <button class="calc-key" onclick="calcKey('6')">6</button>
+          <button class="calc-key op" onclick="calcKey('-')">−</button>
+          <button class="calc-key" onclick="calcKey('1')">1</button>
+          <button class="calc-key" onclick="calcKey('2')">2</button>
+          <button class="calc-key" onclick="calcKey('3')">3</button>
+          <button class="calc-key op" onclick="calcKey('+')">+</button>
+          <button class="calc-key" style="grid-column:span 2" onclick="calcKey('0')">0</button>
+          <button class="calc-key" onclick="calcKey('.')">.</button>
+          <button class="calc-key eq" onclick="calcKey('=')">=</button>
+        </div>
+        <div style="font-size:9px;color:#888;margin-top:4px;text-align:center">* El código trampa cambia con cada cálculo</div>
+      </div>
+    </div>
+
+    <!-- Media player (trap) -->
+    <div id="media-win" class="wwin" style="width:380px;top:50px;left:100px;z-index:18">
+      <div class="wtbar" style="background:linear-gradient(to right,#1a1a3a,#2244aa)" onmousedown="dragStart(event,'media-win')">
+        <span class="wtbar-title">🎵 Windows Media Player</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="minimizeWin('media-win')">_</div><div class="wbtn" onclick="closeWin('media-win')">✕</div></div>
+      </div>
+      <div style="background:#111133;padding:10px;color:#8888ff;font-size:11px;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+        <div style="font-size:36px">🎵</div>
+        <div style="color:#aaaaff;font-size:13px">▶ Reproduciendo: david_mix_2024.mp3</div>
+        <div style="width:80%;background:#333;height:4px;border-radius:2px;position:relative">
+          <div style="width:35%;background:#4488ff;height:100%;border-radius:2px"></div>
+        </div>
+        <div style="color:#6666aa;font-size:10px">01:23 / 03:45</div>
+        <div style="display:flex;gap:10px;font-size:18px">⏮ ⏸ ⏭ 🔀 🔁</div>
+      </div>
+      <div style="background:#c0c0c0;padding:6px;font-size:10px">
+        <div>Lista de reproducción:</div>
+        <div class="flist" style="max-height:80px">
+          <div class="fitem">🎵 01 — Bad Bunny Mix</div>
+          <div class="fitem">🎵 02 — Reggaeton clasico</div>
+          <div class="fitem" style="background:#000080;color:#fff">🎵 03 — david_mix_2024.mp3 (reproduciendo)</div>
+          <div class="fitem">🎵 04 — numero_secreto_NO.mp3</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Snake game (trap with fake code at game over) -->
+    <div id="snake-win" class="wwin" style="width:320px;top:40px;left:120px;z-index:18">
+      <div class="wtbar" onmousedown="dragStart(event,'snake-win')">
+        <span class="wtbar-title">🐍 Snake.exe — Versión David</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="closeWin('snake-win')">✕</div></div>
+      </div>
+      <div class="wbody" style="padding:4px;text-align:center">
+        <canvas id="snake-canvas" class="snake-canvas" width="290" height="200"></canvas>
+        <div style="font-size:10px;color:#555;margin-top:3px">Usa las flechas del teclado. Al perder ves un código trampa.</div>
+        <div id="snake-msg" style="font-size:11px;color:#800000;margin-top:4px;min-height:16px"></div>
+      </div>
+    </div>
+
+    <!-- ===== CISCO PACKET TRACER ===== -->
+    <div id="cisco-win" class="wwin" style="width:700px;top:15px;left:60px;z-index:20">
+      <div class="wtbar" style="background:linear-gradient(to right,#003399,#1d63a5)" onmousedown="dragStart(event,'cisco-win')">
+        <span class="wtbar-title">🔵 Cisco Packet Tracer 8.0 — david_red_vlan.pkt</span>
+        <div class="wbtn-grp"><div class="wbtn" onclick="minimizeWin('cisco-win')">_</div><div class="wbtn" onclick="closeWin('cisco-win')">✕</div></div>
+      </div>
+      <!-- Cisco menubar -->
+      <div class="menubar" style="background:#e8e8f0"><span>File</span><span>Edit</span><span>Options</span><span>View</span><span>Tools</span><span>Extensions</span><span>Help</span></div>
+      <!-- Cisco toolbar -->
+      <div style="background:#d0d8e8;padding:3px 6px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #aabbcc;font-size:10px">
+        <span style="background:#c0c8d8;border:1px solid #8899aa;padding:2px 6px;cursor:pointer">💾 Save</span>
+        <span style="background:#c0c8d8;border:1px solid #8899aa;padding:2px 6px;cursor:pointer">▶ Simulate</span>
+        <span style="background:#c0c8d8;border:1px solid #8899aa;padding:2px 6px;cursor:pointer">⚡ Realtime</span>
+        <span style="flex:1"></span>
+        <span style="color:#004488;font-weight:bold">MODO: Realtime</span>
+      </div>
+      <div class="cisco-body">
+        <!-- Sidebar -->
+        <div class="cisco-sidebar">
+          <div style="font-size:10px;font-weight:bold;padding:3px;background:#c8d8e8;margin-bottom:4px">Dispositivos</div>
+          <div id="cisco-tree">
+            <div class="cisco-tree-item" id="tree-topology" onclick="ciscoShow('topology')" style="font-weight:bold">📐 Topología</div>
+            <div class="cisco-tree-item" id="tree-switch" onclick="ciscoShow('switch')">🔄 Switch0 (2960)</div>
+            <div class="cisco-tree-item" id="tree-pc1" onclick="ciscoShow('pc1')">💻 PC1</div>
+            <div class="cisco-tree-item" id="tree-pc2" onclick="ciscoShow('pc2')">💻 PC2</div>
+            <div class="cisco-tree-item" id="tree-vlan" onclick="ciscoShow('vlan')">📋 VLAN Manager</div>
+          </div>
+          <div style="font-size:10px;font-weight:bold;padding:3px;background:#c8d8e8;margin:8px 0 4px">Logs</div>
+          <div id="cisco-log" style="font-size:9px;color:#444;line-height:1.5;max-height:100px;overflow-y:auto;background:#f5f5f5;padding:2px;border:1px solid #ccc">
+            <div>System booting...</div>
+            <div style="color:#006600">Switch0: Online</div>
+            <div style="color:#cc4400">PC1: No VLAN</div>
+            <div style="color:#cc4400">PC2: No VLAN</div>
+          </div>
+        </div>
+        <!-- Main panel -->
+        <div class="cisco-main" id="cisco-main-panel">
+          <!-- Topology view -->
+          <div id="cisco-panel-topology">
+            <div class="cisco-panel">
+              <h4>📐 Topología de red — Laboratorio Redes</h4>
+              <div class="cisco-topology" id="cisco-topo" style="height:200px">
+                <!-- Switch node -->
+                <div class="cisco-dev-node" style="left:45%;top:20px" onclick="ciscoShow('switch')">
+                  <div class="cisco-dev-box">🔄</div>
+                  <div class="cisco-dev-label">Switch0<br>Cisco 2960</div>
+                </div>
+                <!-- PC1 node -->
+                <div class="cisco-dev-node" style="left:15%;top:110px" onclick="ciscoShow('pc1')">
+                  <div class="cisco-dev-box" id="pc1-box">💻</div>
+                  <div class="cisco-dev-label">PC1<br>Fa0/1</div>
+                </div>
+                <!-- PC2 node -->
+                <div class="cisco-dev-node" style="left:70%;top:110px" onclick="ciscoShow('pc2')">
+                  <div class="cisco-dev-box" id="pc2-box">💻</div>
+                  <div class="cisco-dev-label">PC2<br>Fa0/2</div>
+                </div>
+                <!-- Wires (SVG) -->
+                <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" id="topo-svg">
+                  <line id="wire1" x1="52%" y1="18%" x2="24%" y2="65%" stroke="#555" stroke-width="2" stroke-dasharray="4,3"/>
+                  <line id="wire2" x1="52%" y1="18%" x2="78%" y2="65%" stroke="#555" stroke-width="2" stroke-dasharray="4,3"/>
+                </svg>
+              </div>
+              <div style="font-size:10px;color:#555;margin-top:4px">Doble clic en un dispositivo para configurarlo. <span style="color:#cc4400">⚠️ Faltan asignaciones VLAN</span></div>
+            </div>
+          </div>
+
+          <!-- Switch config -->
+          <div id="cisco-panel-switch" style="display:none">
+            <div class="cisco-panel">
+              <h4>🔄 Switch0 — Cisco Catalyst 2960</h4>
+              <div class="cisco-tabs">
+                <span class="cisco-tab active" onclick="switchTab(this,'sw-physical')">Físico</span>
+                <span class="cisco-tab" onclick="switchTab(this,'sw-cli')">CLI</span>
+                <span class="cisco-tab" onclick="switchTab(this,'sw-ports')">Puertos</span>
+              </div>
+              <div id="sw-physical">
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                  <div style="background:#1a1a1a;padding:8px;border-radius:4px;color:#00ff44;font-size:10px;font-family:'Share Tech Mono',monospace">
+                    <div style="color:#aaa;font-size:9px;margin-bottom:4px">Cisco Catalyst 2960-24TC</div>
+                    <div style="display:flex;gap:3px;flex-wrap:wrap;max-width:200px">
+                      <span id="sw-port-fa01" style="width:14px;height:8px;background:#00aa00;display:inline-block;border-radius:1px;cursor:pointer" title="Fa0/1" onclick="ciscoShow('pc1')"></span>
+                      <span id="sw-port-fa02" style="width:14px;height:8px;background:#00aa00;display:inline-block;border-radius:1px;cursor:pointer" title="Fa0/2" onclick="ciscoShow('pc2')"></span>
+                      <span style="width:14px;height:8px;background:#444;display:inline-block;border-radius:1px"></span>
+                      <span style="width:14px;height:8px;background:#444;display:inline-block;border-radius:1px"></span>
+                      <span style="width:14px;height:8px;background:#444;display:inline-block;border-radius:1px"></span>
+                      <span style="width:14px;height:8px;background:#444;display:inline-block;border-radius:1px"></span>
+                    </div>
+                    <div style="margin-top:4px;color:#ffaa00;font-size:9px">SYST ● RPS ● STAT ● DUPLX ● SPEED</div>
+                  </div>
+                  <div style="font-size:10px">
+                    <div>Modelo: WS-C2960-24TC-L</div>
+                    <div>IOS: 15.0(2)SE</div>
+                    <div>Uptime: 0d 0h 14m</div>
+                    <div style="color:#cc4400;margin-top:4px">⚠️ VLANs no configuradas</div>
+                  </div>
+                </div>
+              </div>
+              <div id="sw-cli" style="display:none">
+                <div class="cisco-status" id="sw-cli-output" style="min-height:120px;max-height:160px;overflow-y:auto">Switch>enable
+Switch#conf t
+Enter configuration commands, one per line. End with CNTL/Z.
+Switch(config)#</div>
+                <div style="display:flex;gap:4px;margin-top:4px">
+                  <input class="cisco-input" id="cli-input" style="flex:1;font-size:10px" placeholder="Escribe comandos IOS..." onkeydown="cliEnter(event)">
+                  <button class="cisco-btn" onclick="cliEnter({key:'Enter'})">Enter</button>
+                </div>
+                <div style="font-size:9px;color:#555;margin-top:3px">Pista: intenta <code>interface fa0/1</code> o <code>vlan ?</code></div>
+              </div>
+              <div id="sw-ports" style="display:none">
+                <table class="cisco-port-table">
+                  <tr><th>Puerto</th><th>Estado</th><th>VLAN</th><th>Velocidad</th></tr>
+                  <tr><td>Fa0/1</td><td style="color:#006600">Connected</td><td id="port-fa01-vlan" style="color:#cc4400">Sin VLAN</td><td>100Mb</td></tr>
+                  <tr><td>Fa0/2</td><td style="color:#006600">Connected</td><td id="port-fa02-vlan" style="color:#cc4400">Sin VLAN</td><td>100Mb</td></tr>
+                  <tr><td>Fa0/3</td><td style="color:#888">Not Connected</td><td>—</td><td>—</td></tr>
+                  <tr><td>Fa0/4</td><td style="color:#888">Not Connected</td><td>—</td><td>—</td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- PC1 config -->
+          <div id="cisco-panel-pc1" style="display:none">
+            <div class="cisco-panel">
+              <h4>💻 PC1 — Escritorio</h4>
+              <div class="cisco-tabs">
+                <span class="cisco-tab active" onclick="switchTab(this,'pc1-desktop')">Escritorio</span>
+                <span class="cisco-tab" onclick="switchTab(this,'pc1-config')">Config</span>
+              </div>
+              <div id="pc1-desktop">
+                <div style="background:#008080;padding:10px;min-height:80px;display:flex;gap:10px;flex-wrap:wrap">
+                  <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;color:#fff;font-size:10px" onclick="openCommandPrompt('pc1')">
+                    <div style="font-size:22px">💻</div><div>Command Prompt</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;color:#fff;font-size:10px">
+                    <div style="font-size:22px">🌐</div><div>Web Browser</div>
+                  </div>
+                </div>
+                <div id="pc1-cmd" style="display:none;background:#000;color:#c0c0c0;padding:6px;font-size:10px;font-family:'Share Tech Mono',monospace;min-height:60px">
+                  <div>C:\&gt; ipconfig</div>
+                  <div style="margin-left:10px;color:#aaa">IP Address: 192.168.10.1</div>
+                  <div style="margin-left:10px;color:#aaa">Subnet Mask: 255.255.255.0</div>
+                  <div style="margin-left:10px;color:#cc4400">Default Gateway: (none)</div>
+                  <div style="margin-left:10px;color:#cc4400">VLAN: Not assigned</div>
+                  <div style="margin-top:4px;color:#ffaa00">C:\&gt; <span class="blinking">_</span></div>
+                </div>
+              </div>
+              <div id="pc1-config" style="display:none">
+                <div class="cisco-row"><span class="cisco-label">IP:</span><input class="cisco-input" value="192.168.10.1" readonly></div>
+                <div class="cisco-row"><span class="cisco-label">Máscara:</span><input class="cisco-input" value="255.255.255.0" readonly></div>
+                <div class="cisco-row"><span class="cisco-label">Gateway:</span><input class="cisco-input" value="(no asignado)" readonly></div>
+                <div style="color:#cc4400;font-size:10px;margin-top:4px">⚠️ Este PC no tiene VLAN asignada. Configura el switch.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PC2 config -->
+          <div id="cisco-panel-pc2" style="display:none">
+            <div class="cisco-panel">
+              <h4>💻 PC2 — Escritorio</h4>
+              <div class="cisco-tabs">
+                <span class="cisco-tab active" onclick="switchTab(this,'pc2-desktop')">Escritorio</span>
+                <span class="cisco-tab" onclick="switchTab(this,'pc2-config')">Config</span>
+              </div>
+              <div id="pc2-desktop">
+                <div style="background:#008080;padding:10px;min-height:80px;display:flex;gap:10px;flex-wrap:wrap">
+                  <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;color:#fff;font-size:10px" onclick="openCommandPrompt('pc2')">
+                    <div style="font-size:22px">💻</div><div>Command Prompt</div>
+                  </div>
+                </div>
+                <div id="pc2-cmd" style="display:none;background:#000;color:#c0c0c0;padding:6px;font-size:10px;font-family:'Share Tech Mono',monospace;min-height:60px">
+                  <div>C:\&gt; ipconfig</div>
+                  <div style="margin-left:10px;color:#aaa">IP Address: 192.168.10.2</div>
+                  <div style="margin-left:10px;color:#aaa">Subnet Mask: 255.255.255.0</div>
+                  <div style="margin-left:10px;color:#cc4400">VLAN: Not assigned</div>
+                  <div style="margin-top:4px;color:#ffaa00">C:\&gt; <span class="blinking">_</span></div>
+                </div>
+              </div>
+              <div id="pc2-config" style="display:none">
+                <div class="cisco-row"><span class="cisco-label">IP:</span><input class="cisco-input" value="192.168.10.2" readonly></div>
+                <div class="cisco-row"><span class="cisco-label">Máscara:</span><input class="cisco-input" value="255.255.255.0" readonly></div>
+                <div style="color:#cc4400;font-size:10px;margin-top:4px">⚠️ Este PC no tiene VLAN asignada.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VLAN Manager — THE KEY PANEL -->
+          <div id="cisco-panel-vlan" style="display:none">
+            <div class="cisco-panel">
+              <h4>📋 VLAN Manager — Switch0</h4>
+              <div style="margin-bottom:8px">
+                <table class="cisco-port-table" id="vlan-table">
+                  <tr><th>VLAN ID</th><th>Nombre</th><th>Puertos</th><th>Estado</th></tr>
+                  <tr><td>1</td><td>default</td><td>Fa0/1–24</td><td class="vlan-status-ok">Activa</td></tr>
+                  <tr id="vlan-custom-row" style="display:none"><td id="vlan-new-id">—</td><td id="vlan-new-name">—</td><td id="vlan-new-ports">—</td><td id="vlan-new-status" class="vlan-status-err">—</td></tr>
+                </table>
+              </div>
+              <div style="background:#f0f8ff;border:1px solid #99bbdd;padding:8px;font-size:10px">
+                <div style="font-weight:bold;color:#1d63a5;margin-bottom:6px">➕ Crear nueva VLAN</div>
+                <div class="cisco-row">
+                  <span class="cisco-label">VLAN ID:</span>
+                  <input class="cisco-input" id="vlan-id-input" type="number" min="2" max="4094" placeholder="Ej: 10">
+                  <span style="font-size:9px;color:#888">(2–4094)</span>
+                </div>
+                <div class="cisco-row">
+                  <span class="cisco-label">Nombre:</span>
+                  <input class="cisco-input" id="vlan-name-input" placeholder="Ej: Administracion">
+                </div>
+                <div class="cisco-row">
+                  <span class="cisco-label">Asignar a:</span>
+                  <select class="cisco-input" id="vlan-port-select">
+                    <option value="fa01">Fa0/1 (PC1)</option>
+                    <option value="fa02">Fa0/2 (PC2)</option>
+                    <option value="both">Fa0/1 y Fa0/2 (ambos)</option>
+                  </select>
+                </div>
+                <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
+                  <button class="cisco-btn" onclick="createVLAN()">Aplicar configuración</button>
+                  <div id="vlan-feedback" style="font-size:10px;color:#555"></div>
+                </div>
+              </div>
+              <div style="font-size:9px;color:#888;margin-top:6px;background:#fffff0;border:1px solid #dddd88;padding:4px">
+                💡 <strong>Pista del proyecto:</strong> El VLAN ID del proyecto de David coincide con el número secreto. Está escrito en su cuaderno de redes.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- end cisco-win -->
+
+    <!-- Start menu -->
+    <div id="start-menu">
+      <div style="background:linear-gradient(to bottom,#000080,#1084d0);color:#fff;padding:6px 10px;font-size:12px;font-weight:bold;font-family:'Share Tech Mono',monospace">
+        🪟 Windows XP
+      </div>
+      <div class="smitem" onclick="openMyPC()">🖥️ Mi PC</div>
+      <div class="smitem" onclick="openDocs()">📁 Mis Documentos</div>
+      <div class="smitem" onclick="openIE()">🌐 Internet Explorer</div>
+      <div class="smitem-sep"></div>
+      <div class="smitem" onclick="openCisco()">🔵 Cisco Packet Tracer</div>
+      <div class="smitem" onclick="openCalculator()">🧮 Calculadora</div>
+      <div class="smitem" onclick="openMedia()">🎵 Windows Media Player</div>
+      <div class="smitem" onclick="openGame()">🐍 Snake.exe</div>
+      <div class="smitem" onclick="openPaint()">🎨 Paint</div>
+      <div class="smitem-sep"></div>
+      <div class="smitem" onclick="openMsConfig()">⚙️ Ejecutar... (msconfig)</div>
+      <div class="smitem-sep"></div>
+      <div class="smitem" style="color:#800000" onclick="fakeShutdown()">⏻ Apagar...</div>
+    </div>
+
+    <!-- Taskbar -->
+    <div id="taskbar">
+      <button id="start-win" onclick="toggleStartMenu()">🪟 Inicio</button>
+      <div id="taskbar-items"></div>
+      <div id="tclock">00:00</div>
+    </div>
+  </div><!-- end desktop -->
+</div><!-- end os -->
+
+<!-- Cuaderno de David (physical notebook popup) -->
+<div id="notebook-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;align-items:center;justify-content:center">
+  <div style="background:#fffde7;border:3px solid #c8a000;border-radius:4px;padding:20px;max-width:340px;font-family:'Share Tech Mono',monospace;position:relative;box-shadow:4px 4px 10px rgba(0,0,0,0.5)">
+    <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#c8a000;color:#fff;padding:2px 16px;font-size:12px;border-radius:10px">📓 Cuaderno de David — Redes y Sistemas</div>
+    <div style="margin-top:10px;font-size:11px;line-height:1.8;color:#333">
+      <div style="border-bottom:1px solid #c8a000;margin-bottom:8px;color:#888;font-size:10px">Apuntes Tema 4: VLANs</div>
+      <div>Las VLANs sirven para segmentar la red.</div>
+      <div>Cada VLAN tiene un <strong>ID único</strong> (2–4094).</div>
+      <div style="margin-top:8px;background:#fff3c0;padding:6px;border-left:3px solid #c8a000">
+        📝 Mi proyecto: VLAN para el aula de informática<br>
+        Nombre elegido: <strong>DAVID_LAB</strong><br>
+        ID que le asigné: <strong style="font-size:16px;color:#c84000" id="notebook-number">??</strong><br>
+        (apuntado el <span id="notebook-date">12/11/2024</span>)
+      </div>
+      <div style="margin-top:8px;color:#888;font-size:10px;font-style:italic">
+        ← Configura el Switch en Cisco con este ID<br>
+        y asígnalo a Fa0/1 (PC1) para terminar.
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="winbtn" onclick="closeNotebook()">Cerrar cuaderno</button>
+    </div>
+  </div>
+</div>
+
+<!-- BSOD / Victory -->
+<div id="bsod">
+  <div class="bsod-title">✅ ¡PC DE DAVID REPARADO!</div>
+  <div class="bsod-code">VLAN configurada correctamente en Switch0</div>
+  <div class="bsod-code">Fa0/1 → VLAN <span id="bsod-vlan-id">??</span> → PC1 online</div>
+  <div style="margin:20px 0">
+    <div class="bsod-code">El número secreto era:</div>
+    <div class="bsod-num" id="bsod-num">??</div>
+  </div>
+  <div class="bsod-sub">🎉 La red de David por fin funciona</div>
+  <div class="bsod-sub" style="font-size:13px;color:#88eecc;margin-top:4px">¡Dile el número al profe para pasar a la siguiente fase!</div>
+  <button class="bsod-restart" onclick="location.reload()">↩ Jugar de nuevo</button>
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip"></div>
+<!-- Right-click menu -->
+<div id="rclick-menu">
+  <div class="rcitem" onclick="closeRclick()">Actualizar</div>
+  <div class="rcitem-sep"></div>
+  <div class="rcitem" onclick="openNotepad('desktop_info.txt','=== ESCRITORIO DE DAVID ===\n\nFecha: hoy\nUsuario: david_garcia\n\nSistema operativo: Windows XP\nSP2 (desactualizado)\n\nEstado: CORRUPTO\n\nRecordatorio:\n- El número no está aquí\n- Está en CISCO\n- Configura la VLAN\n- ¡Suerte!');closeRclick()">Propiedades del escritorio</div>
+  <div class="rcitem" onclick="openNotepad('nueva_nota.txt','');closeRclick()">Nuevo → Documento de texto</div>
+  <div class="rcitem-sep"></div>
+  <div class="rcitem" onclick="closeRclick()">Organizar iconos</div>
+</div>
+
+<script>
+// ==================== ESTADO DEL JUEGO ====================
+const SECRET = 47; // número secreto fijo
+let gameReady = false;
+let vlanCreated = false;
+let notebookFound = false;
+let cliHistory = [];
+let calcVal = '', calcOp = '', calcPrev = '';
+let snakeRunning = false;
+
+// Snake state
+let snakeDir = {x:1,y:0}, snakeBody = [], snakeFood = {x:0,y:0};
+let snakeInterval = null;
+
+// ==================== INTRO ====================
+function startIntro() {
+  const btn = document.getElementById('start-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Cargando...';
+  const david = document.getElementById('david-svg');
+  const pc = document.getElementById('pc-tower');
+  const sparks = document.getElementById('sparks');
+  const bubble = document.getElementById('speech-bubble');
+  const errFlash = document.getElementById('pc-error-flash');
+
+  // Fase 1 — David camina hacia el PC (0.4s)
+  setTimeout(() => {
+    david.classList.add('phase-walk');
+  }, 300);
+
+  // Fase 2 — David da la patada + burbuja de texto (1.1s)
+  setTimeout(() => {
+    david.classList.remove('phase-walk');
+    david.classList.add('phase-kick');
+    bubble.textContent = '¡TOMA YA!';
+    bubble.classList.add('show');
+  }, 1100);
+
+  // Fase 3 — PC recibe el golpe + chispas (1.5s)
+  setTimeout(() => {
+    pc.classList.add('hit');
+    sparks.classList.add('show');
+    errFlash.classList.add('show');
+  }, 1500);
+
+  // Fase 4 — PC humea, David retrocede, burbuja cambia (2.0s)
+  setTimeout(() => {
+    sparks.classList.remove('show');
+    bubble.textContent = '...ups';
+    pc.classList.remove('hit');
+    pc.classList.add('smoking');
+    david.classList.remove('phase-kick');
+    david.classList.add('phase-recoil');
+  }, 2000);
+
+  // Fase 5 — Fade out intro (2.7s)
+  setTimeout(() => {
+    errFlash.classList.remove('show');
+    document.getElementById('intro').classList.add('fading');
+  }, 2700);
+
+  // Fase 6 — Mostrar OS (3.9s)
+  setTimeout(() => {
+    document.getElementById('intro').style.display = 'none';
+    document.getElementById('os').classList.add('show');
+    initOS();
+  }, 3900);
+}
+
+function initOS() {
+  gameReady = true;
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(blinkPcLight, 700);
+  setTimeout(() => {
+    showWin('error-win');
+    addTbItem('error-win','⚠️ Error');
+  }, 800);
+  setTimeout(() => {
+    showWin('virus-win');
+    addTbItem('virus-win','🦠 Virus');
+  }, 2200);
+  // random extra popups
+  setTimeout(() => showPopupAd(), 15000);
+  setTimeout(() => showPopupAd2(), 30000);
+}
+
+// ==================== WINDOWS MANAGEMENT ====================
+let dragging = null, dOffX = 0, dOffY = 0;
+let zTop = 10;
+
+function showWin(id) {
+  const w = document.getElementById(id);
+  if (!w) return;
+  w.classList.add('open');
+  w.style.zIndex = ++zTop;
+}
+function closeWin(id) {
+  const w = document.getElementById(id);
+  if (!w) return;
+  w.classList.remove('open');
+  removeTbItem(id);
+}
+function minimizeWin(id) { closeWin(id); }
+
+function dragStart(e, id) {
+  dragging = document.getElementById(id);
+  const r = dragging.getBoundingClientRect();
+  dOffX = e.clientX - r.left;
+  dOffY = e.clientY - r.top;
+  dragging.style.zIndex = ++zTop;
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', dragEnd);
+}
+function onDrag(e) {
+  if (!dragging) return;
+  dragging.style.left = Math.max(0, e.clientX - dOffX) + 'px';
+  dragging.style.top = Math.max(0, e.clientY - dOffY) + 'px';
+}
+function dragEnd() {
+  dragging = null;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', dragEnd);
+}
+
+// Taskbar
+function addTbItem(id, label) {
+  if (document.getElementById('tb_'+id)) return;
+  const d = document.createElement('div');
+  d.className = 'tbitem'; d.id = 'tb_'+id; d.textContent = label;
+  d.onclick = () => { showWin(id); };
+  document.getElementById('taskbar-items').appendChild(d);
+}
+function removeTbItem(id) {
+  const el = document.getElementById('tb_'+id);
+  if (el) el.remove();
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById('tclock').textContent =
+    n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+}
+function blinkPcLight() {
+  const l = document.getElementById('pc-light');
+  if (l) l.style.fill = (l.style.fill === 'rgb(255, 34, 0)') ? '#ff8800' : 'rgb(255, 34, 0)';
+}
+function updateHint(msg) {
+  document.getElementById('hint-bar').textContent = '🔍 ' + msg;
+}
+
+// Start menu
+function toggleStartMenu() {
+  const sm = document.getElementById('start-menu');
+  sm.classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#start-menu') && !e.target.closest('#start-win'))
+    document.getElementById('start-menu').classList.remove('open');
+  if (!e.target.closest('#rclick-menu'))
+    document.getElementById('rclick-menu').classList.remove('open');
+});
+
+// Right click
+document.getElementById('desktop').addEventListener('contextmenu', e => {
+  e.preventDefault();
+  if (e.target.closest('.wwin') || e.target.closest('#taskbar')) return;
+  const rm = document.getElementById('rclick-menu');
+  rm.style.left = e.clientX + 'px';
+  rm.style.top = Math.min(e.clientY, window.innerHeight - 120) + 'px';
+  rm.classList.add('open');
+});
+function closeRclick() { document.getElementById('rclick-menu').classList.remove('open'); }
+
+// ==================== APP OPENERS ====================
+function openMyPC() {
+  showWin('docs-win'); addTbItem('docs-win','📁 Mis Documentos');
+  updateHint('Explora Mis Documentos para encontrar pistas...');
+}
+function openDocs() { openMyPC(); }
+function openRecycleBin() {
+  showWin('recycle-win'); addTbItem('recycle-win','🗑️ Papelera');
+}
+function openVirus() {
+  showWin('virus-win'); addTbItem('virus-win','🦠 Virus');
+  updateHint('El virus dice que el número está en Cisco...');
+}
+function openIE() {
+  showWin('ie-win'); addTbItem('ie-win','🌐 Internet Explorer');
+}
+function openMsConfig() {
+  showWin('msconfig-win'); addTbItem('msconfig-win','⚙️ msconfig');
+}
+function openDevice() {
+  showWin('device-win'); addTbItem('device-win','🔌 Dispositivos');
+  updateHint('El adaptador de red tiene errores — configura la VLAN en Cisco');
+}
+function openPaint() {
+  showWin('paint-win'); addTbItem('paint-win','🎨 Paint');
+  initPaint();
+}
+function openCalculator() {
+  showWin('calc-win'); addTbItem('calc-win','🧮 Calculadora');
+  updateFakeCode();
+}
+function openMedia() {
+  showWin('media-win'); addTbItem('media-win','🎵 Media Player');
+}
+function openGame() {
+  showWin('snake-win'); addTbItem('snake-win','🐍 Snake');
+  initSnake();
+}
+function openCisco() {
+  showWin('cisco-win'); addTbItem('cisco-win','🔵 Cisco PT');
+  updateHint('Cisco Packet Tracer — configura la VLAN para descubrir el número');
+  ciscoShow('topology');
+  // After a delay, show notebook hint
+  setTimeout(() => {
+    if (!notebookFound) showNotebookHint();
+  }, 5000);
+}
+
+// ==================== NOTEPAD ====================
+function openNotepad(fname, content) {
+  document.getElementById('npad-title').textContent = '📝 ' + fname;
+  document.getElementById('npad-content').value = content;
+  document.getElementById('notepad-win').style.top = '50px';
+  document.getElementById('notepad-win').style.left = '140px';
+  showWin('notepad-win'); addTbItem('notepad-win','📝 '+fname);
+}
+
+// ==================== IE ====================
+function ieNavigate() {
+  const url = document.getElementById('ie-url').value.toLowerCase();
+  const body = document.getElementById('ie-body');
+  if (url.includes('cisco') || url.includes('vlan') || url.includes('red')) {
+    body.innerHTML = '<div style="padding:16px;font-size:11px"><div style="color:#1d63a5;font-size:16px;font-weight:bold">Cisco Systems</div><div style="margin:8px 0">Esta página requiere conexión a internet.</div><div style="background:#fffbe0;border:1px solid #e0c000;padding:6px;font-size:10px">Pista: la configuración VLAN la haces <strong>localmente</strong> en Cisco Packet Tracer, no en internet.</div></div>';
+  } else if (url.includes('numero') || url.includes('secreto')) {
+    body.innerHTML = '<div style="padding:16px;font-size:11px"><div style="color:#cc0000">Página no encontrada — 404</div><div style="margin:8px 0;font-size:10px">El número secreto no está en internet, está en la red de David.</div></div>';
+  } else {
+    body.innerHTML = '<div style="padding:16px;font-size:11px"><div style="color:#cc0000">No se puede mostrar la página</div><div style="color:#555;font-size:10px;margin-top:6px">Internet Explorer no puede conectarse al servidor.<br><br>Posibles causas:<br>• Sin conexión a internet<br>• El PC de David está roto<br><br>Pista: el número está en <strong>Cisco Packet Tracer</strong>.</div></div>';
+  }
+}
+
+// ==================== PAINT ====================
+function initPaint() {
+  const c = document.getElementById('paint-canvas');
+  if (c._inited) return;
+  c._inited = true;
+  const ctx = c.getContext('2d');
+  let drawing = false;
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  c.addEventListener('mousedown', e => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
+  c.addEventListener('mousemove', e => {
+    document.getElementById('paint-coords').textContent = e.offsetX + ', ' + e.offsetY;
+    if (!drawing) return;
+    ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke();
+  });
+  c.addEventListener('mouseup', () => drawing = false);
+  c.addEventListener('mouseleave', () => drawing = false);
+}
+
+// ==================== CALCULATOR ====================
+let calcExpr = '0';
+function updateFakeCode() {
+  const codes = ['ERROR_44','CODE_??','TRAP_7','FALSO_9','X_ERROR','NULL_'+Math.floor(Math.random()*90+10)];
+  document.getElementById('fake-code').textContent = codes[Math.floor(Math.random()*codes.length)];
+}
+function calcKey(k) {
+  const d = document.getElementById('calc-display');
+  if (k === 'C') { calcExpr = '0'; }
+  else if (k === '=') {
+    try {
+      let expr = calcExpr.replace('×','*').replace('÷','/').replace('−','-');
+      calcExpr = String(Math.round(eval(expr)*100)/100);
+    } catch { calcExpr = 'Error'; }
+    updateFakeCode();
+  } else if (k === '±') {
+    calcExpr = calcExpr.startsWith('-') ? calcExpr.slice(1) : '-' + calcExpr;
+  } else if (k === '%') {
+    calcExpr = String(parseFloat(calcExpr)/100);
+  } else {
+    if (calcExpr === '0' && '0123456789'.includes(k)) calcExpr = k;
+    else calcExpr += k;
+  }
+  d.textContent = calcExpr;
+}
+
+// ==================== SNAKE ====================
+function initSnake() {
+  const c = document.getElementById('snake-canvas');
+  const ctx = c.getContext('2d');
+  const SZ = 10, W = 29, H = 20;
+  snakeBody = [{x:14,y:10},{x:13,y:10},{x:12,y:10}];
+  snakeDir = {x:1,y:0};
+  placeFood();
+  if (snakeInterval) clearInterval(snakeInterval);
+  snakeRunning = true;
+  document.getElementById('snake-msg').textContent = '▶ Jugando — flechas para mover';
+  snakeInterval = setInterval(snakeTick, 150);
+
+  document.addEventListener('keydown', snakeKey);
+
+  function placeFood() {
+    snakeFood = {x:Math.floor(Math.random()*W), y:Math.floor(Math.random()*H)};
+  }
+  function snakeTick() {
+    const head = {x: snakeBody[0].x + snakeDir.x, y: snakeBody[0].y + snakeDir.y};
+    if (head.x < 0 || head.x >= W || head.y < 0 || head.y >= H ||
+        snakeBody.some(s => s.x===head.x && s.y===head.y)) {
+      clearInterval(snakeInterval); snakeRunning = false;
+      document.removeEventListener('keydown', snakeKey);
+      const fakeScore = Math.floor(Math.random()*80+20);
+      document.getElementById('snake-msg').textContent =
+        '💀 Game over! Puntuación: ' + fakeScore + ' (código trampa, no el secreto)';
+      ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(60,80,170,40);
+      ctx.fillStyle = '#ff4444'; ctx.font = 'bold 14px monospace';
+      ctx.fillText('GAME OVER — Score: '+fakeScore, 65, 105);
+      return;
+    }
+    snakeBody.unshift(head);
+    if (head.x === snakeFood.x && head.y === snakeFood.y) { placeFood(); }
+    else { snakeBody.pop(); }
+    // Draw
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#00cc44';
+    snakeBody.forEach(s => ctx.fillRect(s.x*SZ, s.y*SZ, SZ-1, SZ-1));
+    ctx.fillStyle = '#ff4444';
+    ctx.fillRect(snakeFood.x*SZ, snakeFood.y*SZ, SZ-1, SZ-1);
+  }
+}
+function snakeKey(e) {
+  if (!snakeRunning) return;
+  const dirs = {ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0}};
+  if (dirs[e.key]) {
+    e.preventDefault();
+    const d = dirs[e.key];
+    if (!(d.x === -snakeDir.x && d.y === -snakeDir.y)) snakeDir = d;
+  }
+}
+
+// ==================== CISCO LOGIC ====================
+let ciscoCurrentPanel = 'topology';
+function ciscoShow(panel) {
+  ['topology','switch','pc1','pc2','vlan'].forEach(p => {
+    const el = document.getElementById('cisco-panel-'+p);
+    if (el) el.style.display = (p===panel) ? 'block' : 'none';
+    const tr = document.getElementById('tree-'+p);
+    if (tr) tr.classList.toggle('selected', p===panel);
+  });
+  ciscoCurrentPanel = panel;
+  if (panel === 'vlan') {
+    updateHint('VLAN Manager — crea una VLAN con el ID del cuaderno de David y asígnala a Fa0/1');
+    showNotebookHint();
+  }
+}
+
+function switchTab(el, panel) {
+  const tabs = el.parentElement.querySelectorAll('.cisco-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  // find sibling panels
+  const parent = el.closest('.cisco-panel');
+  if (!parent) return;
+  const allPanels = parent.querySelectorAll('[id^="sw-"],[id^="pc1-"],[id^="pc2-"]');
+  allPanels.forEach(p => p.style.display='none');
+  const target = document.getElementById(panel);
+  if (target) target.style.display = 'block';
+}
+
+function openCommandPrompt(pc) {
+  const el = document.getElementById(pc+'-cmd');
+  if (el) el.style.display = (el.style.display==='none') ? 'block' : 'none';
+}
+
+// CLI logic
+const cliCommands = {
+  'enable': 'Switch#',
+  'conf t': 'Enter configuration commands, one per line. End with CNTL/Z.\nSwitch(config)#',
+  'configure terminal': 'Enter configuration commands, one per line. End with CNTL/Z.\nSwitch(config)#',
+  'show vlan': () => {
+    let t = 'VLAN Name                             Status    Ports\n---- -------------------------------- --------- ------\n1    default                          active    Fa0/1-24\n';
+    if (vlanCreated) t += SECRET + '   DAVID_LAB                         active    Fa0/1\n';
+    return t;
+  },
+  'show version': 'Cisco IOS Software, Version 15.0(2)SE\nCisco WS-C2960-24TC-L, ROM 12.2(55r)\nConfiguration register is 0x0F',
+  'show ip interface brief': 'Interface        IP-Address    OK? Method Status\nVlan1            unassigned    YES unset  up\nFa0/1            unassigned    YES unset  connected\nFa0/2            unassigned    YES unset  connected',
+  'help': '--- Comandos disponibles ---\nenable | conf t | show vlan | show version\ninterface fa0/1 | switchport access vlan <id>\nvlan <id> | name <nombre>',
+  '?': 'Comandos disponibles: enable, conf t, show vlan, show version, interface fa0/1, vlan <id>',
+  'exit': 'Switch#',
+  'end': 'Switch#',
+};
+
+function cliEnter(e) {
+  if (e.key !== 'Enter') return;
+  const inp = document.getElementById('cli-input');
+  const cmd = inp.value.trim().toLowerCase();
+  inp.value = '';
+  const out = document.getElementById('sw-cli-output');
+  let response = '';
+  if (cmd === '') return;
+  if (cliCommands[cmd]) {
+    const v = cliCommands[cmd];
+    response = typeof v === 'function' ? v() : v;
+  } else if (cmd.startsWith('vlan ')) {
+    const id = parseInt(cmd.split(' ')[1]);
+    if (!isNaN(id) && id >= 2 && id <= 4094) {
+      response = 'Switch(config-vlan)#\n[VLAN '+id+' created]';
+      ciscoLog('VLAN '+id+' creada');
+    } else response = '% Invalid VLAN ID';
+  } else if (cmd.startsWith('name ')) {
+    response = 'Switch(config-vlan)#';
+  } else if (cmd.startsWith('interface ')) {
+    response = 'Switch(config-if)#\n[Entrando en ' + cmd.split(' ')[1] + ']';
+  } else if (cmd.startsWith('switchport access vlan ')) {
+    const id = parseInt(cmd.split(' ').pop());
+    if (!isNaN(id)) {
+      response = 'Switch(config-if)#\n[Puerto asignado a VLAN ' + id + ']';
+      if (id === SECRET) {
+        setTimeout(() => { triggerVictory(id); }, 1500);
+        response += '\n[✓] VLAN '+id+' correctamente asignada a Fa0/1';
+      } else {
+        response += '\n[!] VLAN ID incorrecto — el número no coincide';
+      }
+    }
+  } else if (cmd === 'no shutdown' || cmd === 'no shut') {
+    response = 'Switch(config-if)#\n[Interface activada]';
+  } else {
+    response = '% Unknown command: ' + cmd + '\nType ? for help';
+  }
+  out.innerHTML += '\n<span style="color:#88ff88">' + cmd + '</span>\n' + response;
+  out.scrollTop = out.scrollHeight;
+}
+
+function createVLAN() {
+  const idInput = document.getElementById('vlan-id-input');
+  const nameInput = document.getElementById('vlan-name-input');
+  const portSel = document.getElementById('vlan-port-select');
+  const feedback = document.getElementById('vlan-feedback');
+  const id = parseInt(idInput.value);
+  const name = nameInput.value.trim() || 'VLAN_' + id;
+  const port = portSel.value;
+
+  if (isNaN(id) || id < 2 || id > 4094) {
+    feedback.textContent = '❌ VLAN ID inválido (debe ser 2-4094)';
+    feedback.style.color = '#cc0000'; return;
+  }
+
+  // Update VLAN table
+  document.getElementById('vlan-custom-row').style.display = '';
+  document.getElementById('vlan-new-id').textContent = id;
+  document.getElementById('vlan-new-name').textContent = name;
+  const portLabel = port==='fa01' ? 'Fa0/1' : port==='fa02' ? 'Fa0/2' : 'Fa0/1, Fa0/2';
+  document.getElementById('vlan-new-ports').textContent = portLabel;
+  vlanCreated = true;
+
+  // Update port table
+  if (port === 'fa01' || port === 'both') {
+    document.getElementById('port-fa01-vlan').textContent = 'VLAN ' + id;
+    document.getElementById('port-fa01-vlan').className = 'vlan-status-ok';
+  }
+  if (port === 'fa02' || port === 'both') {
+    document.getElementById('port-fa02-vlan').textContent = 'VLAN ' + id;
+    document.getElementById('port-fa02-vlan').className = 'vlan-status-ok';
+  }
+
+  ciscoLog('VLAN '+id+' ('+name+') → '+portLabel);
+
+  if (id === SECRET && (port === 'fa01' || port === 'both')) {
+    document.getElementById('vlan-new-status').textContent = '✓ Activa';
+    document.getElementById('vlan-new-status').className = 'vlan-status-ok';
+    feedback.textContent = '✅ ¡VLAN configurada correctamente!';
+    feedback.style.color = '#006600';
+    document.getElementById('sw-port-fa01').style.background = '#00ff44';
+    updateHint('¡VLAN correcta! ¡El PC de David se está reparando!');
+    setTimeout(() => triggerVictory(id), 2000);
+  } else if (id === SECRET) {
+    document.getElementById('vlan-new-status').textContent = 'Creada (falta asignar a Fa0/1)';
+    document.getElementById('vlan-new-status').className = 'vlan-status-err';
+    feedback.textContent = '⚠️ VLAN creada pero asígnala a Fa0/1 (donde está PC1)';
+    feedback.style.color = '#cc6600';
+  } else {
+    document.getElementById('vlan-new-status').textContent = 'ID incorrecto';
+    document.getElementById('vlan-new-status').className = 'vlan-status-err';
+    feedback.textContent = '❌ ID incorrecto — consulta el cuaderno de David';
+    feedback.style.color = '#cc0000';
+    ciscoLog('⚠️ ID '+id+' no coincide');
+    // show notebook after wrong attempt
+    setTimeout(() => showNotebookHint(), 800);
+  }
+}
+
+function ciscoLog(msg) {
+  const log = document.getElementById('cisco-log');
+  const d = document.createElement('div');
+  d.style.color = '#0044aa';
+  d.textContent = msg;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function triggerVictory(id) {
+  document.getElementById('bsod-vlan-id').textContent = id;
+  document.getElementById('bsod-num').textContent = SECRET;
+  document.getElementById('bsod').classList.add('show');
+}
+
+// ==================== NOTEBOOK ====================
+function showNotebookHint() {
+  if (notebookFound) return;
+  notebookFound = true;
+  document.getElementById('notebook-number').textContent = SECRET;
+  document.getElementById('notebook-overlay').style.display = 'flex';
+  updateHint('Encontraste el cuaderno de David — ahora ve al VLAN Manager en Cisco');
+}
+function closeNotebook() {
+  document.getElementById('notebook-overlay').style.display = 'none';
+  // Highlight VLAN manager
+  if (document.getElementById('cisco-win').classList.contains('open')) {
+    ciscoShow('vlan');
+  }
+}
+
+// ==================== RANDOM POPUPS ====================
+function showPopupAd() {
+  openNotepad('publicidad.txt','¡¡FELICIDADES!! Has ganado un viaje a las Maldivas.\n\nSólo tienes que dar el número secreto al organizador.\nEspera... eso no tiene sentido.\n\nEste mensaje es una trampa.\nEl número NO está aquí.\n\nVuelve a Cisco Packet Tracer.\n¡Configura esa VLAN!');
+  updateHint('Otra ventana molesta... el número sigue en Cisco');
+}
+function showPopupAd2() {
+  if (vlanCreated) return;
+  const el = document.getElementById('error-win');
+  el.querySelector('.wbody').innerHTML = '<div style="color:#800000;font-weight:bold">ADVERTENCIA CRÍTICA</div><div style="font-size:10px;margin:6px 0">El PC lleva <strong>'+Math.floor(Math.random()*20+10)+'</strong> minutos roto.<br>Configura la VLAN <strong>antes de que explote</strong>.<br><br>Ve a: Cisco PT → VLAN Manager</div><div style="text-align:center"><button class="winbtn" onclick="closeWin(\'error-win\')">OK ya voy</button><button class="winbtn" onclick="openCisco()">🔵 Abrir Cisco</button></div>';
+  showWin('error-win');
+  addTbItem('error-win','⚠️ URGENTE');
+  updateHint('¡Nuevo error! El PC de David está empeorando...');
+}
+function fakeShutdown() {
+  document.getElementById('start-menu').classList.remove('open');
+  openNotepad('apagando.txt','Apagando Windows XP...\n\n...\n...\n¡Error! El PC no se puede apagar.\n\nDavid lo ha roto demasiado.\n\nPara poder apagarlo correctamente\nnecesitas reparar la red.\n\nConfigura la VLAN en Cisco Packet Tracer.');
+  updateHint('No puedes apagar el PC de David hasta repararlo');
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  // Paint canvas hover
+  const pc = document.getElementById('paint-canvas');
+  if (pc) {
+    pc.addEventListener('mousemove', e => {
+      const span = document.getElementById('paint-coords');
+      if (span) span.textContent = e.offsetX + ', ' + e.offsetY;
+    });
+  }
+});
+</script>
+</body>
+</html>

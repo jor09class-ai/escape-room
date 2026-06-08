@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marcos Buscaminitas</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo:     #c0392b;
+    --rojo-vivo:#e74c3c;
+    --amarillo: #f1c40f;
+    --oro:      #e8b800;
+    --gris-bg:  #2e2e2e;
+    --gris-mid: #3d3d3d;
+    --gris-borde:#5a5a5a;
+    --gris-claro:#b0b0b0;
+    --blanco:   #ffffff;
+    --sombra:   rgba(0,0,0,0.45);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--gris-bg);
+    background-image:
+      repeating-linear-gradient(45deg, rgba(192,57,43,0.06) 0px, rgba(192,57,43,0.06) 1px, transparent 1px, transparent 14px),
+      repeating-linear-gradient(-45deg, rgba(241,196,15,0.04) 0px, rgba(241,196,15,0.04) 1px, transparent 1px, transparent 14px);
+    min-height: 100vh;
+    font-family: 'Crimson Text', Georgia, serif;
+    color: var(--amarillo);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 40px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ══════════════════════════════════════
+     BANDERAS DE ESPAÑA — FRANJA SUPERIOR
+  ══════════════════════════════════════ */
+  .franja-bandera {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+  .franja-r { background: var(--rojo);    height: 22px; }
+  .franja-a { background: var(--amarillo);height: 36px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:1.2rem; letter-spacing:4px; }
+  .franja-r2 { background: var(--rojo);   height: 22px; }
+
+  /* Banderas flotantes en las esquinas */
+  .banderas-esquina {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: none;
+  }
+  .banderas-esquina.izq { left: 6px; }
+  .banderas-esquina.der { right: 6px; }
+
+  .mini-bandera {
+    width: 40px;
+    height: 26px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+    opacity: 0.85;
+  }
+  .mini-bandera .mf-r  { background: var(--rojo);     flex: 1; }
+  .mini-bandera .mf-a  { background: var(--amarillo);  flex: 1.4; }
+  .mini-bandera .mf-r2 { background: var(--rojo);     flex: 1; }
+
+  /* Banderas de pie de página */
+  .fila-banderas {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 18px 0 8px;
+    width: 100%;
+    padding: 0 10px;
+  }
+
+  .bandera-svg {
+    width: 48px;
+    height: 32px;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .bandera-svg .b-r  { background: var(--rojo);     flex: 1; }
+  .bandera-svg .b-a  { background: var(--amarillo);  flex: 1.4; }
+  .bandera-svg .b-r2 { background: var(--rojo);     flex: 1; }
+
+  /* ══════════════════════════════════════
+     CABECERA
+  ══════════════════════════════════════ */
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding: 0 16px;
+    position: relative;
+  }
+
+  .corona {
+    font-size: 2.4rem;
+    display: block;
+    margin-bottom: -4px;
+    filter: drop-shadow(0 0 10px var(--amarillo));
+    animation: brillo 3s ease-in-out infinite;
+  }
+
+  @keyframes brillo {
+    0%,100% { filter: drop-shadow(0 0 8px var(--amarillo)); }
+    50%      { filter: drop-shadow(0 0 22px var(--oro)); }
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 3.8rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--amarillo) 0%, var(--oro) 50%, var(--rojo-vivo) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+    line-height: 1.1;
+    text-shadow: none;
+  }
+
+  .subtitulo {
+    font-size: 1.05rem;
+    color: var(--rojo-vivo);
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+
+  .separador {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px auto 18px;
+    width: min(500px, 90%);
+  }
+  .separador span { font-size: 1.4rem; }
+  .linea {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--rojo), var(--amarillo), var(--rojo), transparent);
+  }
+
+  /* ══════════════════════════════════════
+     TARJETAS
+  ══════════════════════════════════════ */
+  .tarjeta {
+    background: var(--gris-mid);
+    border: 2px solid var(--rojo);
+    border-top: 4px solid var(--amarillo);
+    border-radius: 4px;
+    padding: 18px 24px;
+    max-width: 680px;
+    width: 90%;
+    margin-bottom: 18px;
+    position: relative;
+    box-shadow: 0 4px 20px var(--sombra);
+  }
+
+  .tarjeta::before, .tarjeta::after {
+    content: '🇪🇸';
+    position: absolute;
+    font-size: 1rem;
+    opacity: 0.6;
+  }
+  .tarjeta::before { top: 8px; left: 10px; }
+  .tarjeta::after  { bottom: 8px; right: 10px; }
+
+  .tarjeta h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--amarillo);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+  }
+
+  .tarjeta p, .tarjeta li {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: #d4d4d4;
+  }
+
+  .tarjeta strong { color: var(--amarillo); }
+  .tarjeta em     { color: var(--rojo-vivo); }
+
+  .tarjeta ul { list-style: none; padding-left: 0; }
+  .tarjeta li { padding: 3px 0; }
+  .tarjeta li::before { content: '🇪🇸 '; }
+
+  .secreto-hint {
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: rgba(192,57,43,0.25);
+    border-left: 4px solid var(--rojo-vivo);
+    border-radius: 0 4px 4px 0;
+    font-size: 1rem;
+    color: #f5c6be;
+    font-style: italic;
+  }
+
+  /* ══════════════════════════════════════
+     HUD
+  ══════════════════════════════════════ */
+  .hud {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .hud-item {
+    background: var(--gris-mid);
+    border: 2px solid var(--rojo);
+    border-top: 3px solid var(--amarillo);
+    border-radius: 4px;
+    padding: 8px 18px;
+    font-family: 'Playfair Display', serif;
+    color: var(--amarillo);
+    min-width: 105px;
+    text-align: center;
+    box-shadow: 0 2px 10px var(--sombra);
+  }
+
+  .hud-item .label {
+    font-size: 0.62rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gris-claro);
+    font-family: 'Crimson Text', serif;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .hud-item .valor { font-size: 1.5rem; font-weight: 700; }
+
+  /* ══════════════════════════════════════
+     TABLERO
+  ══════════════════════════════════════ */
+  .tablero-wrap {
+    background: var(--gris-mid);
+    border: 3px solid var(--rojo);
+    border-top: 5px solid var(--amarillo);
+    border-bottom: 5px solid var(--amarillo);
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: 0 8px 32px var(--sombra);
+    position: relative;
+  }
+
+  /* Banderas decorativas en las esquinas del tablero */
+  .tablero-wrap::before,
+  .tablero-wrap::after {
+    content: '🇪🇸';
+    position: absolute;
+    font-size: 1.4rem;
+  }
+  .tablero-wrap::before { top: 4px; left: 6px; }
+  .tablero-wrap::after  { top: 4px; right: 6px; }
+
+  #tablero {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+  }
+
+  .celda {
+    width: 46px;
+    height: 46px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    transition: transform 0.08s, box-shadow 0.08s;
+    position: relative;
+    border: none;
+    outline: none;
+  }
+
+  /* Sin revelar — rojo oscuro con brillo */
+  .celda.oculta {
+    background: linear-gradient(145deg, #8b1a1a, #6b0f0f);
+    box-shadow: 3px 3px 0 #3a0505, inset 1px 1px 0 rgba(241,196,15,0.2);
+    color: transparent;
+  }
+  .celda.oculta:hover {
+    background: linear-gradient(145deg, #a52020, #801212);
+    transform: translateY(-1px);
+    box-shadow: 3px 4px 0 #3a0505, inset 1px 1px 0 rgba(241,196,15,0.3);
+  }
+
+  /* Bandera */
+  .celda.bandera {
+    background: linear-gradient(145deg, #8b1a1a, #6b0f0f);
+    box-shadow: 3px 3px 0 #3a0505, inset 1px 1px 0 rgba(241,196,15,0.2);
+    font-size: 1.3rem;
+  }
+
+  /* Revelada vacía */
+  .celda.vacia {
+    background: #252525;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.6);
+    cursor: default;
+    color: transparent;
+  }
+
+  /* Revelada con número */
+  .celda.numero {
+    background: #252525;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.6);
+    cursor: default;
+  }
+
+  .n1 { color: #f1c40f; }
+  .n2 { color: #e74c3c; }
+  .n3 { color: #ff8c00; }
+  .n4 { color: #e67e22; }
+  .n5 { color: #c0392b; }
+  .n6 { color: #f39c12; }
+  .n7 { color: #d35400; }
+  .n8 { color: #b0b0b0; }
+
+  /* Mina */
+  .celda.mina {
+    background: #5a0808;
+    box-shadow: inset 2px 2px 4px rgba(0,0,0,0.5);
+    font-size: 1.4rem;
+    cursor: default;
+  }
+
+  .celda.mina-explosiOn {
+    background: radial-gradient(circle, #ff4500, #8b0000);
+    animation: explosion 0.4s ease-out;
+  }
+
+  @keyframes explosion {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.4); }
+    100% { transform: scale(1); }
+  }
+
+  /* ══════════════════════════════════════
+     MENSAJE
+  ══════════════════════════════════════ */
+  #mensaje {
+    margin-top: 16px;
+    text-align: center;
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .estado-texto { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; }
+  .victoria { color: var(--amarillo); text-shadow: 0 0 16px var(--oro); }
+  .derrota  { color: var(--rojo-vivo); text-shadow: 0 0 16px #8b0000; }
+
+  /* ══════════════════════════════════════
+     CÓDIGO SECRETO
+  ══════════════════════════════════════ */
+  #codigo-secreto {
+    display: none;
+    margin-top: 14px;
+    padding: 18px 28px;
+    background: var(--gris-mid);
+    border: 3px solid var(--amarillo);
+    border-radius: 4px;
+    text-align: center;
+    max-width: 440px;
+    width: 90%;
+    animation: aparece 0.6s ease;
+    box-shadow: 0 0 24px rgba(241,196,15,0.3);
+  }
+
+  @keyframes aparece {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  #codigo-secreto h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--amarillo);
+    margin-bottom: 8px;
+  }
+
+  .digits {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: 16px;
+    color: var(--amarillo);
+    text-shadow: 0 0 24px var(--oro), 0 0 48px rgba(241,196,15,0.4);
+    margin: 10px 0;
+  }
+
+  .digits-hint {
+    font-size: 0.95rem;
+    color: var(--gris-claro);
+    font-style: italic;
+  }
+
+  /* ══════════════════════════════════════
+     BOTÓN REINICIAR
+  ══════════════════════════════════════ */
+  #btn-reiniciar {
+    margin-top: 14px;
+    padding: 11px 30px;
+    background: linear-gradient(135deg, var(--rojo), #7b1010);
+    border: 2px solid var(--amarillo);
+    border-radius: 4px;
+    color: var(--amarillo);
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+  }
+  #btn-reiniciar:hover {
+    background: linear-gradient(135deg, var(--rojo-vivo), var(--rojo));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(192,57,43,0.5);
+  }
+
+  /* ══════════════════════════════════════
+     PIE
+  ══════════════════════════════════════ */
+  footer {
+    margin-top: 10px;
+    font-size: 0.78rem;
+    color: var(--gris-claro);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    opacity: 0.6;
+  }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════════ */
+  @media (max-width: 440px) {
+    .celda { width: 37px; height: 37px; font-size: 0.9rem; }
+    .celda.bandera, .celda.mina { font-size: 1rem; }
+    #tablero { gap: 2px; }
+    .banderas-esquina { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- BANDERAS ESQUINA IZQUIERDA -->
+<div class="banderas-esquina izq">
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+</div>
+
+<!-- BANDERAS ESQUINA DERECHA -->
+<div class="banderas-esquina der">
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+  <div class="mini-bandera"><div class="mf-r"></div><div class="mf-a"></div><div class="mf-r2"></div></div>
+</div>
+
+<!-- FRANJA BANDERA SUPERIOR -->
+<div class="franja-bandera">
+  <div class="franja-r"></div>
+  <div class="franja-a">🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸</div>
+  <div class="franja-r2"></div>
+</div>
+
+<!-- CABECERA -->
+<header>
+  <span class="corona">👑</span>
+  <h1>Marcos Buscaminitas</h1>
+  <p class="subtitulo">🇪🇸 ¡Que viva España! 🇪🇸</p>
+</header>
+
+<div class="separador">
+  <div class="linea"></div>
+  <span>🌹</span>
+  <div class="linea"></div>
+</div>
+
+<!-- DESCRIPCIÓN -->
+<div class="tarjeta">
+  <h2>💘 ¿Qué es esto, compadre?</h2>
+  <p>
+    ¡Bienvenido a la historia más vergonzosa y tierna de toda España! <strong>Marcos</strong> es un mozo de Valladolid con más ilusión que el primero de mayo que lleva <em>años</em> intentando encontrar pareja. El problema es que Marcos no es precisamente un galán: cada vez que se acerca a alguien que le gusta, mete la pata de tal manera que parece que ha pisado una mina. 💥 Un "hola" mal dicho, un tropiezo en el bar, un mensaje enviado a la madre por error… el hombre es un desastre con patas.
+  </p>
+  <p style="margin-top:10px;">
+    Desesperado, Marcos ha decidido guardar el número de teléfono de su amor platónico en un campo minado para que <strong>nadie</strong> —ni él mismo— lo llame sin habérselo ganado de verdad. Ayúdale a superar su campo de minas sentimentales y demuestra que mereces esos dígitos tan preciados. ¡Que el amor es para los valientes, mecachis!
+  </p>
+  <div class="secreto-hint">
+    🔐 <strong>Objetivo de la sala de escape:</strong> Ayuda a Marcos a encontrar el amor superando el campo de minas y obtendrás <strong>2 dígitos</strong> de su número secreto. ¡Apúntalos bien, los necesitarás!
+  </div>
+</div>
+
+<!-- INSTRUCCIONES -->
+<div class="tarjeta">
+  <h2>📋 Instrucciones (léelas, ¡mecachis!)</h2>
+  <ul>
+    <li><strong>Clic izquierdo</strong> sobre una casilla para descubrirla. Si hay una mina… ¡al otro barrio!</li>
+    <li><strong>Clic derecho</strong> (o mantener pulsado en móvil) para plantar una <strong>🚩 bandera</strong> donde sospechas que hay mina.</li>
+    <li>Los <strong>números</strong> indican cuántas minas rodean esa casilla. ¡Usa el caletre!</li>
+    <li>Si descubres una casilla vacía, se abrirán automáticamente sus vecinas. ¡Como las tapas!</li>
+    <li>Hay <strong>10 minas</strong> escondidas en el tablero de 8×8.</li>
+    <li>Si despejas <em>todas</em> las casillas sin mina, ¡Marcos te revela los 2 dígitos secretos! 🎉</li>
+    <li>Si pisas una mina… te explotan los churros. Pulsa <em>Reiniciar</em> y vuelta a empezar.</li>
+  </ul>
+</div>
+
+<!-- HUD -->
+<div class="hud">
+  <div class="hud-item">
+    <span class="label">💣 Minas</span>
+    <span class="valor" id="minas-restantes">10</span>
+  </div>
+  <div class="hud-item">
+    <span class="label">⏱ Tiempo</span>
+    <span class="valor" id="tiempo">0s</span>
+  </div>
+  <div class="hud-item">
+    <span class="label">🚩 Banderas</span>
+    <span class="valor" id="banderas">0</span>
+  </div>
+</div>
+
+<!-- TABLERO -->
+<div class="tablero-wrap">
+  <div id="tablero"></div>
+</div>
+
+<!-- MENSAJE / CÓDIGO SECRETO -->
+<div id="mensaje"></div>
+
+<div id="codigo-secreto">
+  <h3>🔐 Número secreto de Marcos</h3>
+  <div class="digits" id="digits-display"></div>
+  <p class="digits-hint">Estos son los dígitos que necesitas. ¡No los pierdas! 🇪🇸</p>
+</div>
+
+<button id="btn-reiniciar" onclick="reiniciar()">🔄 ¡Otra vez, olé!</button>
+
+<!-- FILA DE BANDERAS -->
+<div class="fila-banderas">
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+  <div class="bandera-svg"><div class="b-r"></div><div class="b-a"></div><div class="b-r2"></div></div>
+</div>
+
+<!-- FRANJA BANDERA INFERIOR -->
+<div class="franja-bandera" style="margin-bottom:0;margin-top:4px;">
+  <div class="franja-r"></div>
+  <div class="franja-a">🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸 🇪🇸</div>
+  <div class="franja-r2"></div>
+</div>
+
+<footer style="padding:8px 0 4px;">
+  <p>Escape Room · Marcos Buscaminitas · Versión Castiza</p>
+</footer>
+
+<script>
+// ─── CONFIGURACIÓN ────────────────────────────────────
+const FILAS = 8, COLS = 8, N_MINAS = 10;
+
+// Número secreto FIJO (no cambia aunque se recargue)
+const DIGITO_1 = 3;
+const DIGITO_2 = 3;
+
+// ─── ESTADO ───────────────────────────────────────────
+let tablero = [];
+let juegoActivo = false;
+let primeraJugada = true;
+let banderas = 0;
+let celdasReveladas = 0;
+let totalSinMina = FILAS * COLS - N_MINAS;
+let intervalo = null;
+let segundos = 0;
+let longPressTimer = null;
+
+// ─── INICIALIZAR ──────────────────────────────────────
+function iniciar() {
+  juegoActivo = true;
+  primeraJugada = true;
+  banderas = 0;
+  celdasReveladas = 0;
+  segundos = 0;
+  clearInterval(intervalo);
+  document.getElementById('tiempo').textContent = '0s';
+  document.getElementById('banderas').textContent = '0';
+  document.getElementById('minas-restantes').textContent = N_MINAS;
+  document.getElementById('mensaje').innerHTML = '';
+  document.getElementById('codigo-secreto').style.display = 'none';
+
+  tablero = [];
+  for (let i = 0; i < FILAS * COLS; i++) {
+    tablero.push({ mina: false, revelada: false, bandera: false, vecinas: 0 });
+  }
+  renderizar();
+}
+
+function idx(f, c) { return f * COLS + c; }
+function enRango(f, c) { return f >= 0 && f < FILAS && c >= 0 && c < COLS; }
+
+function colocarMinas(primerIdx) {
+  const excluir = new Set();
+  const pf = Math.floor(primerIdx / COLS), pc = primerIdx % COLS;
+  for (let df = -1; df <= 1; df++)
+    for (let dc = -1; dc <= 1; dc++)
+      if (enRango(pf + df, pc + dc)) excluir.add(idx(pf + df, pc + dc));
+
+  let colocadas = 0;
+  while (colocadas < N_MINAS) {
+    const r = Math.floor(Math.random() * FILAS * COLS);
+    if (!excluir.has(r) && !tablero[r].mina) {
+      tablero[r].mina = true;
+      colocadas++;
+    }
+  }
+  for (let f = 0; f < FILAS; f++)
+    for (let c = 0; c < COLS; c++) {
+      if (tablero[idx(f,c)].mina) continue;
+      let cnt = 0;
+      for (let df = -1; df <= 1; df++)
+        for (let dc = -1; dc <= 1; dc++)
+          if ((df||dc) && enRango(f+df,c+dc) && tablero[idx(f+df,c+dc)].mina) cnt++;
+      tablero[idx(f,c)].vecinas = cnt;
+    }
+}
+
+function renderizar() {
+  const div = document.getElementById('tablero');
+  div.innerHTML = '';
+  for (let i = 0; i < FILAS * COLS; i++) {
+    const c = tablero[i];
+    const el = document.createElement('div');
+    el.className = 'celda';
+    el.dataset.i = i;
+
+    if (!c.revelada) {
+      if (c.bandera) {
+        el.classList.add('bandera');
+        el.textContent = '🚩';
+      } else {
+        el.classList.add('oculta');
+      }
+    } else {
+      if (c.mina) {
+        el.classList.add('mina');
+        el.textContent = '💣';
+      } else if (c.vecinas === 0) {
+        el.classList.add('vacia');
+      } else {
+        el.classList.add('numero', `n${c.vecinas}`);
+        el.textContent = c.vecinas;
+      }
+    }
+
+    el.addEventListener('click', () => celdaClick(i));
+    el.addEventListener('contextmenu', e => { e.preventDefault(); toggleBandera(i); });
+    el.addEventListener('touchstart', e => {
+      longPressTimer = setTimeout(() => { e.preventDefault(); toggleBandera(i); }, 500);
+    });
+    el.addEventListener('touchend',  () => clearTimeout(longPressTimer));
+    el.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+
+    div.appendChild(el);
+  }
+}
+
+function celdaClick(i) {
+  if (!juegoActivo) return;
+  const c = tablero[i];
+  if (c.revelada || c.bandera) return;
+
+  if (primeraJugada) {
+    primeraJugada = false;
+    colocarMinas(i);
+    iniciarCronometro();
+  }
+
+  if (c.mina) { revelarMinas(i); return; }
+
+  revelarCelda(i);
+  renderizar();
+  comprobarVictoria();
+}
+
+function revelarCelda(i) {
+  const c = tablero[i];
+  if (c.revelada || c.bandera) return;
+  c.revelada = true;
+  celdasReveladas++;
+  if (c.vecinas === 0) {
+    const f = Math.floor(i / COLS), col = i % COLS;
+    for (let df = -1; df <= 1; df++)
+      for (let dc = -1; dc <= 1; dc++)
+        if ((df||dc) && enRango(f+df,col+dc)) revelarCelda(idx(f+df,col+dc));
+  }
+}
+
+function toggleBandera(i) {
+  if (!juegoActivo) return;
+  const c = tablero[i];
+  if (c.revelada) return;
+  c.bandera = !c.bandera;
+  banderas += c.bandera ? 1 : -1;
+  document.getElementById('banderas').textContent = banderas;
+  document.getElementById('minas-restantes').textContent = N_MINAS - banderas;
+  renderizar();
+}
+
+function revelarMinas(minaExplotada) {
+  juegoActivo = false;
+  clearInterval(intervalo);
+  for (let i = 0; i < tablero.length; i++) {
+    if (tablero[i].mina) tablero[i].revelada = true;
+  }
+  renderizar();
+  const celdas = document.querySelectorAll('.celda');
+  celdas[minaExplotada].classList.add('mina-explosiOn');
+  celdas[minaExplotada].textContent = '💥';
+
+  document.getElementById('mensaje').innerHTML = `
+    <span class="estado-texto derrota">💥 ¡Por todos los santos! ¡Has pisado una mina!</span>
+    <span style="color:#d4d4d4;font-size:1rem">Marcos llora en el fondo de su bodega. Inténtalo de nuevo, ¡leche! 🇪🇸</span>
+  `;
+}
+
+function comprobarVictoria() {
+  if (celdasReveladas === totalSinMina) {
+    juegoActivo = false;
+    clearInterval(intervalo);
+    document.getElementById('mensaje').innerHTML = `
+      <span class="estado-texto victoria">🥳 ¡Olé, olé y olé! ¡Has ganado, campeón! 🇪🇸</span>
+      <span style="color:#d4d4d4;font-size:1rem">Marcos te revela su número secreto. ¡Apúntalo, mecachis!</span>
+    `;
+    const cs = document.getElementById('codigo-secreto');
+    cs.style.display = 'block';
+    document.getElementById('digits-display').textContent = `${DIGITO_1} ${DIGITO_2}`;
+  }
+}
+
+function iniciarCronometro() {
+  segundos = 0;
+  clearInterval(intervalo);
+  intervalo = setInterval(() => {
+    segundos++;
+    document.getElementById('tiempo').textContent = segundos + 's';
+  }, 1000);
+}
+
+function reiniciar() { iniciar(); }
+
+iniciar();
+</script>
+</body>
+</html>
