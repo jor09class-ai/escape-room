@@ -24,7 +24,7 @@
         /* Cabecera superior */
         header {
             text-align: center;
-            padding: 25px 10px;
+            padding: 20px 10px;
             background: #0d0d11;
             border-bottom: 2px solid #1f1f2e;
             z-index: 10;
@@ -47,133 +47,147 @@
             margin-top: 5px;
         }
 
-        /* Contenedor de los dos lados */
+        /* Contenedor principal en cuadrícula (2x2) */
         .main-container {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
             flex: 1;
             width: 100%;
         }
 
-        /* Estilo común para ambos lados */
+        /* Estilo común para las 4 opciones */
         .game-choice {
-            flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 40px;
+            padding: 20px;
             text-align: center;
             text-decoration: none;
             position: relative;
-            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-
-        /* LADO IZQUIERDO: Minijuego 1 (Cian/Sistemas) */
-        .left-side {
-            background: linear-gradient(135deg, #07141a 0%, #0c232d 100%);
-            border-right: 1px solid #1f1f2e;
-        }
-
-        .left-side h2 {
-            color: #00e5ff;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
-        }
-
-        .left-side .btn {
-            border: 2px solid #00e5ff;
-            color: #00e5ff;
-            background: transparent;
-        }
-
-        /* LADO DERECHA: Minijuego 2 (Magenta/Redes) */
-        .right-side {
-            background: linear-gradient(135deg, #18071a 0%, #290c2d 100%);
-        }
-
-        .right-side h2 {
-            color: #ff007f;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(255, 0, 127, 0.2);
-        }
-
-        .right-side .btn {
-            border: 2px solid #ff007f;
-            color: #ff007f;
-            background: transparent;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid #1f1f2e;
         }
 
         /* Textos de descripción */
         .game-choice p {
             color: #b3b3b3;
-            font-size: 1.1rem;
-            max-width: 450px;
-            line-height: 1.6;
-            margin-bottom: 40px;
+            font-size: 1rem;
+            max-width: 400px;
+            line-height: 1.5;
+            margin-bottom: 20px;
         }
 
         /* Botones interactivos */
         .btn {
-            padding: 15px 35px;
-            font-size: 1.1rem;
+            padding: 12px 30px;
+            font-size: 1rem;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 2px;
             cursor: pointer;
             border-radius: 4px;
+            background: transparent;
             transition: all 0.3s ease;
         }
 
-        /* --- EFECTOS HOVER (Cuando pasas el ratón) --- */
-        
-        /* El lado seleccionado se expande un poco y brilla */
-        .game-choice:hover {
-            flex: 1.15; 
+        /* --- 1. SUPERIOR IZQUIERDA: David (Cian) --- */
+        .top-left {
+            background: linear-gradient(135deg, #07141a 0%, #0c232d 100%);
         }
-
-        .left-side:hover {
+        .top-left h2 {
+            color: #00e5ff;
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+        }
+        .top-left .btn { border: 2px solid #00e5ff; color: #00e5ff; }
+        
+        .top-left:hover {
             background: linear-gradient(135deg, #091b24 0%, #123241 100%);
             box-shadow: inset 0 0 50px rgba(0, 229, 255, 0.15);
+            transform: scale(1.02);
+            z-index: 2;
         }
+        .top-left:hover .btn { background: #00e5ff; color: #000; box-shadow: 0 0 20px rgba(0, 229, 255, 0.6); }
 
-        .left-side:hover .btn {
-            background: #00e5ff;
-            color: #000;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.6);
+        /* --- 2. SUPERIOR DERECHA: Marcos (Magenta) --- */
+        .top-right {
+            background: linear-gradient(135deg, #18071a 0%, #290c2d 100%);
         }
+        .top-right h2 {
+            color: #ff007f;
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 0, 127, 0.2);
+        }
+        .top-right .btn { border: 2px solid #ff007f; color: #ff007f; }
 
-        .right-side:hover {
+        .top-right:hover {
             background: linear-gradient(135deg, #220a25 0%, #3b1141 100%);
             box-shadow: inset 0 0 50px rgba(255, 0, 127, 0.15);
+            transform: scale(1.02);
+            z-index: 2;
         }
+        .top-right:hover .btn { background: #ff007f; color: #000; box-shadow: 0 0 20px rgba(255, 0, 127, 0.6); }
 
-        .right-side:hover .btn {
-            background: #ff007f;
-            color: #000;
-            box-shadow: 0 0 20px rgba(255, 0, 127, 0.6);
+        /* --- 3. INFERIOR IZQUIERDA: Lorenzo (Amarillo) --- */
+        .bottom-left {
+            background: linear-gradient(135deg, #1a1807 0%, #2d280c 100%);
         }
+        .bottom-left h2 {
+            color: #ffcc00;
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
+        }
+        .bottom-left .btn { border: 2px solid #ffcc00; color: #ffcc00; }
 
-        /* Diseño para móviles (uno arriba y otro abajo) */
+        .bottom-left:hover {
+            background: linear-gradient(135deg, #26220a 0%, #413a11 100%);
+            box-shadow: inset 0 0 50px rgba(255, 204, 0, 0.15);
+            transform: scale(1.02);
+            z-index: 2;
+        }
+        .bottom-left:hover .btn { background: #ffcc00; color: #000; box-shadow: 0 0 20px rgba(255, 204, 0, 0.6); }
+
+        /* --- 4. INFERIOR DERECHA: Linux (Verde) --- */
+        .bottom-right {
+            background: linear-gradient(135deg, #071a0e 0%, #0c2d18 100%);
+        }
+        .bottom-right h2 {
+            color: #00ff66;
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+        }
+        .bottom-right .btn { border: 2px solid #00ff66; color: #00ff66; }
+
+        .bottom-right:hover {
+            background: linear-gradient(135deg, #0a2615 0%, #114122 100%);
+            box-shadow: inset 0 0 50px rgba(0, 255, 102, 0.15);
+            transform: scale(1.02);
+            z-index: 2;
+        }
+        .bottom-right:hover .btn { background: #00ff66; color: #000; box-shadow: 0 0 20px rgba(0, 255, 102, 0.6); }
+
+        /* Diseño para móviles (Lista vertical de 4 elementos) */
         @media (max-width: 768px) {
             body {
                 overflow-y: auto;
                 height: auto;
             }
             .main-container {
-                flex-direction: column;
-                min-height: calc(100vh - 110px);
-            }
-            .left-side {
-                border-right: none;
-                border-bottom: 1px solid #1f1f2e;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                min-height: calc(100vh - 100px);
             }
             .game-choice {
-                padding: 60px 20px;
+                padding: 50px 20px;
             }
             .game-choice:hover {
-                flex: 1; /* Desactiva la expansión en móvil para que no sea raro */
+                transform: none; /* Desactiva escalado en móvil */
             }
         }
     </style>
@@ -187,7 +201,7 @@
 
     <div class="main-container">
         
-        <a href="david.html" class="game-choice left-side">
+        <a href="david.html" class="game-choice top-left">
             <div>
                 <h2>EL ORDENADOR DE DAVID</h2>
                 <p>Comprueba los registros del servidor, repara los fallos del sistema y recupera las credenciales de David antes de que el sistema se bloquee.</p>
@@ -195,10 +209,26 @@
             </div>
         </a>
 
-        <a href="marcos_buscaminitas.html" class="game-choice right-side">
+        <a href="marcos_buscaminitas.html" class="game-choice top-right">
             <div>
                 <h2>BUSCAMINAS</h2>
                 <p>Ayuda a Marcos en el amor, resuelve el buscaminas más Español.</p>
+                <button class="btn">Acceder al Reto</button>
+            </div>
+        </a>
+
+        <a href="lorenzo_ruleta.html" class="game-choice bottom-left">
+            <div>
+                <h2>LA RULETA DE LORENZO</h2>
+                <p>Valora tus conocimientos de ofimática y ayuda a Lorenzo a resolver los enigmas de la suite de oficina.</p>
+                <button class="btn">Acceder al Reto</button>
+            </div>
+        </a>
+
+        <a href="escape_linux.html" class="game-choice bottom-right">
+            <div>
+                <h2>ESCAPE LINUX</h2>
+                <p>Demuestra quién es el mejor analizando códigos en Linux, descifrando scripts y dominando la terminal de comandos.</p>
                 <button class="btn">Acceder al Reto</button>
             </div>
         </a>
