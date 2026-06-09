@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ruleta Ofimática</title>
+
+  <!-- ═══════════════════════════════════════════════════════
+       ESTILOS GLOBALES — Tema oscuro tecnológico/casino
+       Paleta: #0d1117 fondo, #161b22 superficies,
+               #58a6ff azul neón, #3fb950 verde, #d29922 dorado
+               #f0883e naranja, #bc8cff violeta
+  ═══════════════════════════════════════════════════════ -->
+  <style>
+    /* ── Reset y base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1f2937;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --blue:      #58a6ff;
+      --green:     #3fb950;
+      --gold:      #d29922;
+      --orange:    #f0883e;
+      --violet:    #bc8cff;
+      --red:       #f85149;
+
+      /* Colores de los 5 sectores de la ruleta */
+      --c1: #1d6fa4;   /* Procesadores de Texto   — azul */
+      --c2: #1a7a3e;   /* Hojas de Cálculo         — verde */
+      --c3: #7a3a9a;   /* Presentaciones           — violeta */
+      --c4: #b05c1a;   /* Bases de Datos           — naranja */
+      --c5: #8a1a1a;   /* Correo / Agenda          — rojo */
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── Layout principal ────────────────────────────── */
+    #app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+      gap: 24px;
+    }
+
+    /* ── Cabecera ─────────────────────────────────────── */
+    header {
+      text-align: center;
+    }
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--blue), var(--violet));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+
+    /* ── Panel de marcador ───────────────────────────── */
+    #scoreboard {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 24px;
+      text-align: center;
+      min-width: 120px;
+    }
+    .stat-card .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+    }
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-top: 2px;
+    }
+    #score-val  { color: var(--gold); }
+    #round-val  { color: var(--blue); }
+
+    /* ── Área de la ruleta ───────────────────────────── */
+    #wheel-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    #wheel-wrapper {
+      position: relative;
+      width: 340px;
+      height: 340px;
+      filter: drop-shadow(0 0 24px rgba(88,166,255,0.25));
+    }
+
+    /* Puntero (triángulo exterior) */
+    #pointer {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 28px solid var(--gold);
+      filter: drop-shadow(0 2px 6px rgba(210,153,34,0.8));
+      z-index: 10;
+    }
+
+    #wheel-canvas {
+      border-radius: 50%;
+      display: block;
+    }
+
+    /* Centro decorativo sobre el canvas */
+    #wheel-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #2a3040, #111827);
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 12px rgba(210,153,34,0.6);
+      pointer-events: none;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    /* ── Botón girar ──────────────────────────────────── */
+    #btn-spin {
+      padding: 14px 40px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--blue), #1e4d8c);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(88,166,255,0.4);
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+    #btn-spin:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(88,166,255,0.55);
+    }
+    #btn-spin:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ── Área de preguntas ───────────────────────────── */
+    #question-section {
+      width: 100%;
+      max-width: 580px;
+      display: none;  /* oculta hasta que se lance una pregunta */
+    }
+
+    #question-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      animation: slideUp 0.35s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    #category-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+      color: #fff;
+    }
+
+    #question-text {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.55;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    #options-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-btn {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      text-align: left;
+      color: var(--text);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: border-color 0.18s, background 0.18s, transform 0.1s;
+    }
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--blue);
+      background: #1a2535;
+      transform: translateX(4px);
+    }
+    .option-btn.correct {
+      border-color: var(--green);
+      background: rgba(63,185,80,0.15);
+      color: var(--green);
+      font-weight: 700;
+    }
+    .option-btn.wrong {
+      border-color: var(--red);
+      background: rgba(248,81,73,0.15);
+      color: var(--red);
+    }
+    .option-btn:disabled { cursor: default; }
+
+    /* Feedback tras responder */
+    #feedback {
+      margin-top: 16px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    #feedback.ok  { background: rgba(63,185,80,0.18);  color: var(--green); border: 1px solid var(--green); }
+    #feedback.ko  { background: rgba(248,81,73,0.18);  color: var(--red);   border: 1px solid var(--red);   }
+
+    #btn-next {
+      margin-top: 16px;
+      padding: 10px 28px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--green), #1a5e2a);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(63,185,80,0.35);
+      display: none;
+      transition: transform 0.15s;
+    }
+    #btn-next:hover { transform: translateY(-2px); }
+
+    /* ── Pantalla de resultados ───────────────────────── */
+    #results-screen {
+      display: none;
+      width: 100%;
+      max-width: 520px;
+      text-align: center;
+      animation: slideUp 0.5s ease;
+    }
+
+    #results-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+    }
+
+    #result-emoji { font-size: 4rem; margin-bottom: 16px; display: block; }
+    #result-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; }
+    #result-sub   { color: var(--muted); font-size: 0.95rem; margin-bottom: 24px; }
+
+    #result-score-big {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: var(--gold);
+      line-height: 1;
+    }
+    #result-score-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 32px;
+      margin-top: 4px;
+    }
+
+    #result-breakdown {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .breakdown-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .breakdown-item .bi-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+    .breakdown-item .bi-lbl {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #btn-restart {
+      padding: 14px 40px;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--gold), #7a4d05);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(210,153,34,0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    #btn-restart:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(210,153,34,0.6);
+    }
+
+    /* ── Barra de progreso de rondas ─────────────────── */
+    #progress-bar-wrapper {
+      width: 100%;
+      max-width: 340px;
+    }
+    #progress-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    #progress-track {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    #progress-fill {
+      height: 100%;
+      border-radius: 20px;
+      background: linear-gradient(90deg, var(--blue), var(--violet));
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    /* ── Partícula de +10 flotando ───────────────────── */
+    .score-pop {
+      position: fixed;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--gold);
+      pointer-events: none;
+      animation: scorePop 1.2s ease forwards;
+      z-index: 999;
+      text-shadow: 0 0 10px rgba(210,153,34,0.8);
+    }
+    @keyframes scorePop {
+      0%   { opacity: 1; transform: translateY(0)   scale(1); }
+      100% { opacity: 0; transform: translateY(-70px) scale(1.4); }
+    }
+
+    /* ── Responsive básico ───────────────────────────── */
+    @media (max-width: 400px) {
+      #wheel-wrapper { width: 280px; height: 280px; }
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- Cabecera -->
+  <header>
+    <h1>🎰 Ruleta Ofimática</h1>
+    <p>Demuestra tus conocimientos sobre aplicaciones de oficina</p>
+  </header>
+
+  <!-- Marcador -->
+  <div id="scoreboard">
+    <div class="stat-card">
+      <div class="label">Puntuación</div>
+      <div class="value" id="score-val">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Ronda</div>
+      <div class="value" id="round-val">1 / 10</div>
+    </div>
+  </div>
+
+  <!-- Sección ruleta -->
+  <div id="wheel-section">
+    <div id="wheel-wrapper">
+      <div id="pointer"></div>
+      <canvas id="wheel-canvas" width="340" height="340"></canvas>
+      <div id="wheel-center">⚙️</div>
+    </div>
+
+    <!-- Barra de progreso -->
+    <div id="progress-bar-wrapper">
+      <div id="progress-label">Progreso de la partida</div>
+      <div id="progress-track"><div id="progress-fill"></div></div>
+    </div>
+
+    <button id="btn-spin">🎯 Girar Ruleta</button>
+  </div>
+
+  <!-- Sección de pregunta -->
+  <div id="question-section">
+    <div id="question-card">
+      <span id="category-badge"></span>
+      <p id="question-text"></p>
+      <ul id="options-list"></ul>
+      <div id="feedback"></div>
+      <button id="btn-next">Siguiente ronda →</button>
+    </div>
+  </div>
+
+  <!-- Pantalla de resultados finales -->
+  <div id="results-screen">
+    <div id="results-card">
+      <span id="result-emoji"></span>
+      <div id="result-title"></div>
+      <div id="result-sub"></div>
+      <div id="result-score-big"></div>
+      <div id="result-score-label">puntos obtenidos de 100</div>
+      <div id="result-breakdown">
+        <div class="breakdown-item">
+          <span class="bi-val" id="rb-correct" style="color:var(--green)">0</span>
+          <span class="bi-lbl">Correctas</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="bi-val" id="rb-wrong" style="color:var(--red)">0</span>
+          <span class="bi-lbl">Errores</span>
+        </div>
+      </div>
+      <button id="btn-restart">🔄 Reiniciar Juego</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════ -->
+<script>
+"use strict";
+
+/* ─────────────────────────────────────────────────────────
+   1. BANCO DE PREGUNTAS (100 preguntas, 20 por categoría)
+───────────────────────────────────────────────────────── */
+const QUESTIONS = {
+
+  /* ── PROCESADORES DE TEXTO (Word / Writer) ─────────── */
+  "Procesadores de Texto": [
+    {
+      q: "¿Qué atajo de teclado abre el cuadro de búsqueda y reemplazo en Microsoft Word?",
+      opts: ["Ctrl + H", "Ctrl + F", "Ctrl + R"],
+      ans: 0
+    },
+    {
+      q: "¿Cuál es la extensión predeterminada de los documentos de Microsoft Word 2016 y posteriores?",
+      opts: [".doc", ".docx", ".rtf"],
+      ans: 1
+    },
+    {
+      q: "¿Qué atajo aplica el formato de negrita en Word/Writer?",
+      opts: ["Ctrl + B", "Ctrl + N", "Alt + B"],
+      ans: 0
+    },
+    {
+      q: "¿Con qué combinación de teclas se inserta un salto de página manual en Word?",
+      opts: ["Ctrl + Enter", "Shift + Enter", "Alt + Enter"],
+      ans: 0
+    },
+    {
+      q: "¿Qué función de Word permite comparar dos versiones distintas de un mismo documento?",
+      opts: ["Control de cambios", "Comparar documentos", "Revisión ortográfica"],
+      ans: 1
+    },
+    {
+      q: "En Microsoft Word, ¿qué atajo selecciona todo el contenido del documento?",
+      opts: ["Ctrl + A", "Ctrl + E", "Ctrl + T"],
+      ans: 0
+    },
+    {
+      q: "¿Cuál de los siguientes formatos NO admite macros en Word?",
+      opts: [".docm", ".dotm", ".docx"],
+      ans: 2
+    },
+    {
+      q: "¿Qué atajo de teclado deshace la última acción en Word?",
+      opts: ["Ctrl + Z", "Ctrl + Y", "Ctrl + X"],
+      ans: 0
+    },
+    {
+      q: "¿Con qué tecla se activa el modo de sobreescritura en Word?",
+      opts: ["Insert", "Delete", "F5"],
+      ans: 0
+    },
+    {
+      q: "¿Cuál es la extensión de una plantilla de Word con soporte para macros?",
+      opts: [".dotx", ".dotm", ".docm"],
+      ans: 1
+    },
+    {
+      q: "¿Qué atajo de teclado copia el formato de un texto en Word (Copiar formato)?",
+      opts: ["Ctrl + Shift + C", "Ctrl + Alt + C", "Alt + Shift + F"],
+      ans: 0
+    },
+    {
+      q: "En Word, ¿qué hace el atajo Ctrl + Shift + > ?",
+      opts: ["Aumenta el tamaño de fuente", "Disminuye el tamaño de fuente", "Aplica superíndice"],
+      ans: 0
+    },
+    {
+      q: "¿Qué pestaña de la cinta de opciones contiene la herramienta 'Estilos' en Word?",
+      opts: ["Inicio", "Insertar", "Diseño"],
+      ans: 0
+    },
+    {
+      q: "En LibreOffice Writer, ¿con qué atajo se abre el Navegador de documentos?",
+      opts: ["F5", "F4", "F6"],
+      ans: 0
+    },
+    {
+      q: "¿Cuál es la diferencia fundamental entre un salto de sección 'Página siguiente' y 'Continuo' en Word?",
+      opts: [
+        "El 'Página siguiente' inicia la nueva sección en una página nueva; el 'Continuo' en la misma página",
+        "El 'Continuo' inicia la nueva sección en una página nueva; el 'Página siguiente' en la misma",
+        "Ambos funcionan exactamente igual"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Qué atajo activa el subrayado en Word/Writer?",
+      opts: ["Ctrl + U", "Ctrl + S", "Ctrl + L"],
+      ans: 0
+    },
+    {
+      q: "¿Qué vista de Word muestra el documento tal y como se imprimirá?",
+      opts: ["Diseño de impresión", "Borrador", "Esquema"],
+      ans: 0
+    },
+    {
+      q: "¿Cuál es la extensión de los documentos de solo lectura de Word (sin edición)?",
+      opts: [".docx", ".pdf", ".docx con contraseña"],
+      ans: 1
+    },
+    {
+      q: "¿Con qué atajo se inserta un comentario en Microsoft Word?",
+      opts: ["Ctrl + Alt + M", "Ctrl + Shift + K", "Alt + R"],
+      ans: 0
+    },
+    {
+      q: "En Word, ¿qué hace la función 'Autocorrección'?",
+      opts: [
+        "Corrige automáticamente errores tipográficos y ortográficos mientras se escribe",
+        "Revisa el documento completo al guardarlo",
+        "Sugiere sinónimos para palabras seleccionadas"
+      ],
+      ans: 0
+    }
+  ],
+
+  /* ── HOJAS DE CÁLCULO (Excel / Calc) ────────────────── */
+  "Hojas de Cálculo": [
+    {
+      q: "¿Cuál es la extensión predeterminada de los libros de Excel 2016 y posteriores?",
+      opts: [".xls", ".xlsx", ".xlsm"],
+      ans: 1
+    },
+    {
+      q: "¿Qué función de Excel devuelve el valor más alto de un rango?",
+      opts: ["=SUMA()", "=MAX()", "=PROMEDIO()"],
+      ans: 1
+    },
+    {
+      q: "¿Qué atajo de teclado inserta la fecha actual en una celda de Excel?",
+      opts: ["Ctrl + :", "Ctrl + ;", "Ctrl + D"],
+      ans: 1
+    },
+    {
+      q: "¿Qué símbolo se usa para fijar una referencia absoluta de celda en Excel?",
+      opts: ["#", "$", "@"],
+      ans: 1
+    },
+    {
+      q: "¿Qué función busca un valor en la primera columna de una tabla y devuelve un valor de la misma fila?",
+      opts: ["=BUSCARH()", "=BUSCARV()", "=INDICE()"],
+      ans: 1
+    },
+    {
+      q: "¿Cuál es la extensión de un libro de Excel con macros habilitadas?",
+      opts: [".xltx", ".xlsm", ".xlsx"],
+      ans: 1
+    },
+    {
+      q: "¿Qué atajo selecciona toda la columna activa en Excel?",
+      opts: ["Ctrl + Espacio", "Shift + Espacio", "Alt + Espacio"],
+      ans: 0
+    },
+    {
+      q: "¿Qué función de Excel cuenta solo las celdas que cumplen un criterio?",
+      opts: ["=CONTAR()", "=CONTARA()", "=CONTAR.SI()"],
+      ans: 2
+    },
+    {
+      q: "¿Qué hace el atajo Ctrl + Shift + L en Excel?",
+      opts: [
+        "Activa o desactiva los filtros automáticos",
+        "Inserta una hoja nueva",
+        "Abre el cuadro Formato de celdas"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Cuál es la función correcta para calcular el valor absoluto de un número en Excel?",
+      opts: ["=ENTERO()", "=ABS()", "=REDONDEAR()"],
+      ans: 1
+    },
+    {
+      q: "¿Qué tabla dinámica permite resumir, analizar y presentar datos de una hoja de cálculo?",
+      opts: ["Tabla de datos", "Tabla dinámica (PivotTable)", "Tabla formateada"],
+      ans: 1
+    },
+    {
+      q: "¿Con qué atajo se abre el cuadro de diálogo 'Formato de celdas' en Excel?",
+      opts: ["Ctrl + 1", "Ctrl + F", "Ctrl + E"],
+      ans: 0
+    },
+    {
+      q: "¿Qué función de Excel une (concatena) el contenido de varias celdas en versiones modernas?",
+      opts: ["=CONCATENAR()", "=UNIRCADENAS()", "=CONCAT()"],
+      ans: 2
+    },
+    {
+      q: "¿Cuál es el operador de rango en las fórmulas de Excel?",
+      opts: [":", ";", ","],
+      ans: 0
+    },
+    {
+      q: "En Excel, ¿qué muestra la barra de fórmulas?",
+      opts: [
+        "El contenido real de la celda activa (fórmula o valor)",
+        "Solo el resultado numérico de la celda",
+        "El nombre del libro de trabajo"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Qué atajo mueve el cursor a la celda A1 en Excel?",
+      opts: ["Ctrl + Inicio", "Ctrl + Fin", "Ctrl + Home → F5"],
+      ans: 0
+    },
+    {
+      q: "¿Qué función devuelve la posición relativa de un elemento dentro de un rango en Excel?",
+      opts: ["=INDICE()", "=COINCIDIR()", "=BUSCAR()"],
+      ans: 1
+    },
+    {
+      q: "¿Qué extensión tienen las plantillas de Excel sin macros?",
+      opts: [".xltx", ".xltm", ".xlsx"],
+      ans: 0
+    },
+    {
+      q: "¿Qué función lógica de Excel evalúa una condición y devuelve uno de dos valores?",
+      opts: ["=Y()", "=O()", "=SI()"],
+      ans: 2
+    },
+    {
+      q: "¿Qué herramienta de Excel permite establecer restricciones sobre el tipo de datos que se puede ingresar en una celda?",
+      opts: ["Formato condicional", "Validación de datos", "Proteger hoja"],
+      ans: 1
+    }
+  ],
+
+  /* ── PRESENTACIONES (PowerPoint / Impress) ──────────── */
+  "Presentaciones": [
+    {
+      q: "¿Cuál es la extensión predeterminada de las presentaciones de PowerPoint 2016 y posteriores?",
+      opts: [".ppt", ".pptx", ".ppsx"],
+      ans: 1
+    },
+    {
+      q: "¿Con qué atajo se inicia una presentación desde la diapositiva actual en PowerPoint?",
+      opts: ["F5", "Shift + F5", "Ctrl + F5"],
+      ans: 1
+    },
+    {
+      q: "¿Qué extensión tiene un archivo de presentación de PowerPoint de solo visualización (no editable directamente)?",
+      opts: [".pptx", ".ppsx", ".potx"],
+      ans: 1
+    },
+    {
+      q: "¿Cuál es la extensión de una plantilla de PowerPoint?",
+      opts: [".potx", ".pptx", ".ppsx"],
+      ans: 0
+    },
+    {
+      q: "¿Qué atajo en PowerPoint permite borrar el formato de un objeto o texto seleccionado?",
+      opts: ["Ctrl + Shift + Z", "Ctrl + Espacio", "Ctrl + Alt + R"],
+      ans: 1
+    },
+    {
+      q: "¿Con qué tecla se avanza a la siguiente diapositiva durante una presentación en pantalla completa?",
+      opts: ["Enter o flecha derecha", "Tab", "F2"],
+      ans: 0
+    },
+    {
+      q: "¿Qué herramienta de PowerPoint permite crear handouts o notas para el público?",
+      opts: ["Vista presentador", "Panel de notas", "Patrón de diapositivas"],
+      ans: 1
+    },
+    {
+      q: "¿Qué es el 'Patrón de diapositivas' en PowerPoint?",
+      opts: [
+        "Una diapositiva que define el diseño y formato aplicado a todas las demás",
+        "Una plantilla de colores predefinida descargada de Office.com",
+        "La primera diapositiva de la presentación"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Cuál es la proporción de aspecto predeterminada en las presentaciones modernas de PowerPoint?",
+      opts: ["4:3", "16:9", "16:10"],
+      ans: 1
+    },
+    {
+      q: "¿Qué extensión tienen las presentaciones de PowerPoint con macros habilitadas?",
+      opts: [".pptm", ".pptx", ".potm"],
+      ans: 0
+    },
+    {
+      q: "¿Qué función permite animar objetos individuales dentro de una diapositiva de PowerPoint?",
+      opts: ["Transiciones", "Animaciones", "Efectos de diseño"],
+      ans: 1
+    },
+    {
+      q: "¿Qué herramienta muestra en tiempo real las notas y la diapositiva siguiente durante una presentación?",
+      opts: ["Vista normal", "Vista presentador", "Vista clasificador de diapositivas"],
+      ans: 1
+    },
+    {
+      q: "¿Qué atajo duplica la diapositiva seleccionada en PowerPoint?",
+      opts: ["Ctrl + D", "Ctrl + M", "Ctrl + Shift + D"],
+      ans: 0
+    },
+    {
+      q: "En LibreOffice Impress, ¿cuál es la extensión nativa de sus presentaciones?",
+      opts: [".pptx", ".odp", ".impress"],
+      ans: 1
+    },
+    {
+      q: "¿Qué vista de PowerPoint permite reordenar diapositivas fácilmente con arrastrar y soltar?",
+      opts: ["Vista normal", "Vista de lectura", "Clasificador de diapositivas"],
+      ans: 2
+    },
+    {
+      q: "¿Qué tecla oculta la pantalla y muestra una pantalla en negro durante una presentación en PowerPoint?",
+      opts: ["B", "H", "W"],
+      ans: 0
+    },
+    {
+      q: "¿Cuál es la función de la tecla 'W' durante una presentación en PowerPoint?",
+      opts: ["Pone la pantalla en blanco", "Retrocede una diapositiva", "Abre la ventana de notas"],
+      ans: 0
+    },
+    {
+      q: "¿Qué opción permite guardar una presentación de PowerPoint como vídeo?",
+      opts: [
+        "Archivo → Exportar → Crear un vídeo",
+        "Insertar → Vídeo → Guardar como",
+        "Archivo → Guardar como → .avi"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Qué elemento de diseño se usa en PowerPoint para mantener la coherencia visual en todas las diapositivas?",
+      opts: ["Tema", "Esquema", "Tabla de contenido"],
+      ans: 0
+    },
+    {
+      q: "¿Qué herramienta de PowerPoint permite insertar un cronómetro de tiempo en una diapositiva para que avance automáticamente?",
+      opts: ["Transiciones → Tiempo en diapositiva", "Animaciones → Duración", "Insertar → Cronómetro"],
+      ans: 0
+    }
+  ],
+
+  /* ── BASES DE DATOS (Access / Base) ─────────────────── */
+  "Bases de Datos": [
+    {
+      q: "¿Cuál es la extensión predeterminada de las bases de datos de Microsoft Access 2016 y posteriores?",
+      opts: [".mdb", ".accdb", ".db"],
+      ans: 1
+    },
+    {
+      q: "¿Qué elemento de Access se usa para introducir y visualizar registros de forma cómoda?",
+      opts: ["Tabla", "Formulario", "Informe"],
+      ans: 1
+    },
+    {
+      q: "¿Qué tipo de dato de Access permite almacenar texto de hasta 255 caracteres?",
+      opts: ["Texto corto", "Texto largo", "Memo"],
+      ans: 0
+    },
+    {
+      q: "¿Qué lenguaje se usa para realizar consultas a bases de datos relacionales como Access?",
+      opts: ["HTML", "SQL", "XML"],
+      ans: 1
+    },
+    {
+      q: "¿Qué cláusula SQL selecciona todos los campos de una tabla llamada 'Clientes'?",
+      opts: ["SELECT ALL FROM Clientes", "SELECT * FROM Clientes", "GET * FROM Clientes"],
+      ans: 1
+    },
+    {
+      q: "¿Qué es una clave primaria en una base de datos?",
+      opts: [
+        "Un campo que identifica de forma única cada registro de una tabla",
+        "El primer campo de cualquier tabla",
+        "Una contraseña para proteger la base de datos"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Qué tipo de relación se da cuando un registro de la tabla A puede relacionarse con muchos de la tabla B y viceversa?",
+      opts: ["Uno a uno", "Uno a muchos", "Muchos a muchos"],
+      ans: 2
+    },
+    {
+      q: "¿Qué extensión tienen las plantillas de Microsoft Access?",
+      opts: [".accdt", ".accdb", ".mdb"],
+      ans: 0
+    },
+    {
+      q: "¿Qué objeto de Access genera documentos impresos formateados con datos de las tablas?",
+      opts: ["Formulario", "Informe", "Macro"],
+      ans: 1
+    },
+    {
+      q: "En SQL, ¿qué cláusula se usa para filtrar registros según una condición?",
+      opts: ["GROUP BY", "WHERE", "ORDER BY"],
+      ans: 1
+    },
+    {
+      q: "¿Qué tipo de consulta de Access permite añadir nuevos registros a una tabla existente?",
+      opts: ["Consulta de selección", "Consulta de datos anexados", "Consulta de actualización"],
+      ans: 1
+    },
+    {
+      q: "¿Qué función tiene la integridad referencial en Access?",
+      opts: [
+        "Evita que se eliminen registros relacionados sin actualizar o eliminar los registros dependientes",
+        "Asegura que todos los campos numéricos sean positivos",
+        "Protege la base de datos con una contraseña automática"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Qué tipo de índice impide valores duplicados en un campo de Access?",
+      opts: ["Índice sin duplicados", "Índice con duplicados", "Clave externa"],
+      ans: 0
+    },
+    {
+      q: "¿Cuál de los siguientes NO es un tipo de datos válido en Access?",
+      opts: ["Autonumérico", "Hipervínculo", "Fracción"],
+      ans: 2
+    },
+    {
+      q: "En SQL, ¿qué instrucción elimina todos los registros de una tabla pero conserva su estructura?",
+      opts: ["DROP TABLE", "DELETE FROM tabla", "TRUNCATE TABLE"],
+      ans: 2
+    },
+    {
+      q: "¿Qué tipo de combinación (JOIN) en SQL devuelve solo los registros que tienen coincidencia en ambas tablas?",
+      opts: ["LEFT JOIN", "INNER JOIN", "FULL OUTER JOIN"],
+      ans: 1
+    },
+    {
+      q: "¿Qué objeto de Access permite automatizar tareas sin necesidad de programar código?",
+      opts: ["Macro", "Módulo VBA", "Consulta"],
+      ans: 0
+    },
+    {
+      q: "¿En qué vista de Access se define la estructura de campos y tipos de datos de una tabla?",
+      opts: ["Vista Hoja de datos", "Vista Diseño", "Vista Formulario"],
+      ans: 1
+    },
+    {
+      q: "¿Qué cláusula SQL se utiliza para ordenar los resultados de una consulta?",
+      opts: ["SORT BY", "ORDER BY", "GROUP BY"],
+      ans: 1
+    },
+    {
+      q: "¿Qué tipo de relación existe cuando cada registro de la tabla A corresponde a exactamente uno en la tabla B y viceversa?",
+      opts: ["Uno a uno", "Uno a muchos", "Muchos a muchos"],
+      ans: 0
+    }
+  ],
+
+  /* ── CORREO, AGENDA Y FORMATOS ───────────────────────── */
+  "Correo, Agenda y Formatos": [
+    {
+      q: "¿Cuál es la extensión de los archivos de mensaje de correo electrónico de Outlook?",
+      opts: [".msg", ".eml", ".ost"],
+      ans: 0
+    },
+    {
+      q: "¿Qué atajo en Outlook crea un nuevo correo electrónico?",
+      opts: ["Ctrl + N", "Ctrl + M", "Ctrl + E"],
+      ans: 0
+    },
+    {
+      q: "¿Qué protocolo se usa habitualmente para enviar correo electrónico?",
+      opts: ["IMAP", "POP3", "SMTP"],
+      ans: 2
+    },
+    {
+      q: "¿Qué protocolo permite leer el correo dejando los mensajes en el servidor?",
+      opts: ["POP3", "IMAP", "SMTP"],
+      ans: 1
+    },
+    {
+      q: "¿Cuál es la extensión del formato de documento portátil más extendido?",
+      opts: [".pdf", ".xps", ".odt"],
+      ans: 0
+    },
+    {
+      q: "¿Qué extensión usa el formato de texto enriquecido (Rich Text Format) compatible con casi todos los procesadores?",
+      opts: [".txt", ".rtf", ".odt"],
+      ans: 1
+    },
+    {
+      q: "¿Qué significa la sigla ODF en el contexto de formatos de archivo ofimáticos?",
+      opts: [
+        "Open Document Format (Formato de Documento Abierto)",
+        "Office Data File",
+        "Optimized Data Framework"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Qué extensión tienen los documentos de texto de LibreOffice Writer en formato nativo ODF?",
+      opts: [".odt", ".ods", ".odp"],
+      ans: 0
+    },
+    {
+      q: "¿Qué extensión tienen las hojas de cálculo de LibreOffice Calc en formato nativo ODF?",
+      opts: [".odt", ".ods", ".odp"],
+      ans: 1
+    },
+    {
+      q: "¿Qué atajo de teclado en Outlook responde a un correo recibido?",
+      opts: ["Ctrl + R", "Ctrl + Shift + R", "Ctrl + Y"],
+      ans: 0
+    },
+    {
+      q: "¿Qué atajo en Outlook reenvía un mensaje a otro destinatario?",
+      opts: ["Ctrl + F", "Ctrl + R", "Ctrl + Shift + F"],
+      ans: 0
+    },
+    {
+      q: "¿Qué función de la agenda/calendario de Outlook permite enviar una invitación a una reunión a varios contactos?",
+      opts: ["Tarea", "Nueva reunión / Convocatoria de reunión", "Nota rápida"],
+      ans: 1
+    },
+    {
+      q: "¿Qué es el archivo .PST en Outlook?",
+      opts: [
+        "Un archivo de almacenamiento personal que guarda correos, contactos y calendario localmente",
+        "Un protocolo de transferencia segura de correo",
+        "Un complemento de cifrado para mensajes"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Cuál es la diferencia entre CC y CCO en un correo electrónico?",
+      opts: [
+        "CC muestra la dirección a todos los destinatarios; CCO la oculta al resto",
+        "CC envía una copia cifrada; CCO envía una copia normal",
+        "CC es para responder; CCO es para reenviar"
+      ],
+      ans: 0
+    },
+    {
+      q: "¿Qué formato de archivo se usa comúnmente para intercambiar contactos y eventos de calendario entre distintas aplicaciones?",
+      opts: [".vcf / .ics", ".msg / .pst", ".eml / .mbox"],
+      ans: 0
+    },
+    {
+      q: "¿Cuál es la extensión del formato XML de texto enriquecido usado por Word para guardar en formato plano?",
+      opts: [".xml", ".xps", ".docx"],
+      ans: 0
+    },
+    {
+      q: "¿Qué formato de archivo de Outlook sirve para archivar datos cuando el buzón es de Exchange y solo se sincroniza en línea?",
+      opts: [".ost", ".pst", ".msg"],
+      ans: 0
+    },
+    {
+      q: "¿Qué atajo en Microsoft Outlook abre el calendario?",
+      opts: ["Ctrl + 2", "Ctrl + 3", "Ctrl + 4"],
+      ans: 0
+    },
+    {
+      q: "¿Qué extensión tiene un archivo de plantilla de hoja de cálculo de LibreOffice Calc?",
+      opts: [".ods", ".ots", ".odc"],
+      ans: 1
+    },
+    {
+      q: "¿Qué estándar de firma digital se usa habitualmente para autenticar correos electrónicos empresariales?",
+      opts: ["DKIM / S/MIME", "FTP / SSH", "SSL / TLS directamente en el texto"],
+      ans: 0
+    }
+  ]
+};
+
+/* ─────────────────────────────────────────────────────────
+   2. CONFIGURACIÓN DE LA RULETA
+───────────────────────────────────────────────────────── */
+const CATEGORIES = [
+  { name: "Procesadores\nde Texto",  color: "#1d6fa4", textColor: "#ffffff" },
+  { name: "Hojas de\nCálculo",        color: "#1a7a3e", textColor: "#ffffff" },
+  { name: "Presentaciones",           color: "#7a3a9a", textColor: "#ffffff" },
+  { name: "Bases de\nDatos",          color: "#b05c1a", textColor: "#ffffff" },
+  { name: "Correo,\nAgenda y\nFormatos", color: "#8a1a1a", textColor: "#ffffff" }
+];
+
+const TOTAL_ROUNDS  = 10;   // número de rondas totales
+const POINTS_PER_Q  = 10;   // puntos por pregunta correcta
+const SPIN_DURATION = 2800; // ms de animación del giro
+
+/* ─────────────────────────────────────────────────────────
+   3. ESTADO DEL JUEGO
+───────────────────────────────────────────────────────── */
+let state = {
+  score: 0,
+  round: 1,
+  spinning: false,
+  answered: false,
+  correct: 0,
+  wrong: 0,
+  usedQuestions: {},   // { "Procesadores de Texto": [idx, idx, …], … }
+  currentQuestion: null,
+  wheelAngle: 0        // ángulo actual de la ruleta en radianes
+};
+
+/* ─────────────────────────────────────────────────────────
+   4. REFERENCIAS AL DOM
+───────────────────────────────────────────────────────── */
+const canvas          = document.getElementById("wheel-canvas");
+const ctx             = canvas.getContext("2d");
+const btnSpin         = document.getElementById("btn-spin");
+const btnNext         = document.getElementById("btn-next");
+const btnRestart      = document.getElementById("btn-restart");
+const scoreVal        = document.getElementById("score-val");
+const roundVal        = document.getElementById("round-val");
+const progressFill    = document.getElementById("progress-fill");
+const questionSection = document.getElementById("question-section");
+const categoryBadge   = document.getElementById("category-badge");
+const questionText    = document.getElementById("question-text");
+const optionsList     = document.getElementById("options-list");
+const feedbackEl      = document.getElementById("feedback");
+const wheelSection    = document.getElementById("wheel-section");
+const resultsScreen   = document.getElementById("results-screen");
+
+/* ─────────────────────────────────────────────────────────
+   5. DIBUJO DE LA RULETA
+───────────────────────────────────────────────────────── */
+function drawWheel(angle) {
+  const cx = canvas.width  / 2;
+  const cy = canvas.height / 2;
+  const r  = cx - 4;        // radio ligeramente menor que la mitad
+  const slice = (2 * Math.PI) / CATEGORIES.length;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  /* --- Aro exterior decorativo --- */
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 3, 0, 2 * Math.PI);
+  const rimGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  rimGrad.addColorStop(0, "#d29922");
+  rimGrad.addColorStop(0.5, "#ffe680");
+  rimGrad.addColorStop(1, "#b07c10");
+  ctx.strokeStyle = rimGrad;
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  CATEGORIES.forEach((cat, i) => {
+    const startAngle = angle + i * slice - Math.PI / 2;
+    const endAngle   = startAngle + slice;
+
+    /* Sector de relleno */
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+
+    /* Degradado radial para dar profundidad */
+    const grad = ctx.createRadialGradient(cx, cy, r * 0.15, cx, cy, r);
+    grad.addColorStop(0, lighten(cat.color, 40));
+    grad.addColorStop(1, cat.color);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    /* Línea divisoria */
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.strokeStyle = "rgba(0,0,0,0.45)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    /* Texto de la categoría */
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(startAngle + slice / 2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = cat.textColor;
+    ctx.shadowColor = "rgba(0,0,0,0.7)";
+    ctx.shadowBlur  = 4;
+
+    const lines    = cat.name.split("\n");
+    const fontSize = 12;
+    const lineH    = fontSize + 3;
+    const textR    = r - 18;
+
+    ctx.font = `bold ${fontSize}px 'Segoe UI', sans-serif`;
+    lines.forEach((line, li) => {
+      const yOffset = (li - (lines.length - 1) / 2) * lineH;
+      ctx.fillText(line, textR, yOffset + fontSize / 3);
+    });
+    ctx.restore();
+  });
+}
+
+/* Aclara un color hex en un porcentaje (simple utilidad) */
+function lighten(hex, amount) {
+  let r = parseInt(hex.slice(1,3), 16);
+  let g = parseInt(hex.slice(3,5), 16);
+  let b = parseInt(hex.slice(5,7), 16);
+  r = Math.min(255, r + amount);
+  g = Math.min(255, g + amount);
+  b = Math.min(255, b + amount);
+  return `rgb(${r},${g},${b})`;
+}
+
+/* ─────────────────────────────────────────────────────────
+   6. ANIMACIÓN DE GIRO
+───────────────────────────────────────────────────────── */
+function spinWheel(targetCategoryIndex) {
+  const slice         = (2 * Math.PI) / CATEGORIES.length;
+  const extraFullTurns = 4 + Math.floor(Math.random() * 3); // 4–6 vueltas completas
+
+  /* Ángulo necesario para que el sector targetCategoryIndex quede apuntando al puntero (arriba) */
+  const targetCenter  = targetCategoryIndex * slice + slice / 2;
+  const targetAngle   = -targetCenter + (extraFullTurns * 2 * Math.PI);
+
+  const startAngle    = state.wheelAngle;
+  const deltaAngle    = targetAngle - (startAngle % (2 * Math.PI)) + (extraFullTurns * 2 * Math.PI);
+
+  const startTime     = performance.now();
+
+  function easeOut(t) {
+    /* Cubic ease-out */
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function frame(now) {
+    const elapsed = now - startTime;
+    const t       = Math.min(elapsed / SPIN_DURATION, 1);
+    const eased   = easeOut(t);
+
+    state.wheelAngle = startAngle + deltaAngle * eased;
+    drawWheel(state.wheelAngle);
+
+    if (t < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      state.wheelAngle = startAngle + deltaAngle;
+      drawWheel(state.wheelAngle);
+      onSpinEnd(targetCategoryIndex);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+/* ─────────────────────────────────────────────────────────
+   7. LÓGICA DEL GIRO
+───────────────────────────────────────────────────────── */
+function getRandomCategoryIndex() {
+  /* Elige categoría aleatoria entre las que aún tienen preguntas */
+  const available = CATEGORIES.map((c, i) => i).filter(i => {
+    const catName = getCatNameClean(CATEGORIES[i].name);
+    const used    = state.usedQuestions[catName] || [];
+    return used.length < QUESTIONS[catName].length;
+  });
+  if (available.length === 0) return Math.floor(Math.random() * CATEGORIES.length);
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+function getCatNameClean(rawName) {
+  /* Convierte el nombre con saltos de línea al nombre clave del banco */
+  const map = {
+    "Procesadores\nde Texto":       "Procesadores de Texto",
+    "Hojas de\nCálculo":            "Hojas de Cálculo",
+    "Presentaciones":               "Presentaciones",
+    "Bases de\nDatos":              "Bases de Datos",
+    "Correo,\nAgenda y\nFormatos":  "Correo, Agenda y Formatos"
+  };
+  return map[rawName] || rawName;
+}
+
+function getRandomQuestion(categoryName) {
+  const pool = QUESTIONS[categoryName];
+  if (!pool) return null;
+  const used = state.usedQuestions[categoryName] || [];
+  const remaining = pool.map((_, i) => i).filter(i => !used.includes(i));
+  if (remaining.length === 0) return null;
+  const idx = remaining[Math.floor(Math.random() * remaining.length)];
+  state.usedQuestions[categoryName] = [...used, idx];
+  return { ...pool[idx], index: idx };
+}
+
+function onSpinEnd(catIdx) {
+  state.spinning  = false;
+  state.answered  = false;
+
+  const rawName   = CATEGORIES[catIdx].name;
+  const catName   = getCatNameClean(rawName);
+  const catColor  = CATEGORIES[catIdx].color;
+  const question  = getRandomQuestion(catName);
+
+  if (!question) {
+    // Sin preguntas disponibles: avanza ronda directamente
+    nextRound();
+    return;
+  }
+
+  state.currentQuestion = question;
+
+  /* Actualizar badge de categoría */
+  categoryBadge.textContent    = catName;
+  categoryBadge.style.background = catColor;
+
+  /* Mostrar texto de la pregunta */
+  questionText.textContent = question.q;
+
+  /* Construir opciones */
+  optionsList.innerHTML = "";
+  question.opts.forEach((opt, i) => {
+    const li  = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.className    = "option-btn";
+    btn.textContent  = `${String.fromCharCode(65 + i)}. ${opt}`;
+    btn.dataset.idx  = i;
+    btn.addEventListener("click", onAnswer);
+    li.appendChild(btn);
+    optionsList.appendChild(li);
+  });
+
+  feedbackEl.style.display = "none";
+  btnNext.style.display    = "none";
+
+  /* Mostrar sección de preguntas */
+  questionSection.style.display = "block";
+  questionSection.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ─────────────────────────────────────────────────────────
+   8. MANEJO DE RESPUESTAS
+───────────────────────────────────────────────────────── */
+function onAnswer(e) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const selected = parseInt(e.currentTarget.dataset.idx);
+  const correct  = state.currentQuestion.ans;
+
+  /* Bloquear todos los botones */
+  document.querySelectorAll(".option-btn").forEach(b => b.disabled = true);
+
+  if (selected === correct) {
+    e.currentTarget.classList.add("correct");
+    state.score  += POINTS_PER_Q;
+    state.correct++;
+
+    feedbackEl.textContent  = "✅ ¡Correcto! +10 puntos";
+    feedbackEl.className    = "ok";
+    feedbackEl.style.display = "block";
+
+    scoreVal.textContent = state.score;
+    scoreVal.style.animation = "none";
+    void scoreVal.offsetWidth; // reflow para reiniciar animación
+    scoreVal.style.animation = "";
+
+    /* Partícula flotante +10 */
+    spawnScorePop();
+  } else {
+    e.currentTarget.classList.add("wrong");
+    /* Resaltar correcta */
+    document.querySelectorAll(".option-btn")[correct].classList.add("correct");
+
+    feedbackEl.textContent  = `❌ Incorrecto. La respuesta correcta era: ${String.fromCharCode(65 + correct)}.`;
+    feedbackEl.className    = "ko";
+    feedbackEl.style.display = "block";
+    state.wrong++;
+  }
+
+  btnNext.style.display = "inline-block";
+}
+
+/* Animación de puntos flotando */
+function spawnScorePop() {
+  const el = document.createElement("div");
+  el.className   = "score-pop";
+  el.textContent = "+10";
+
+  const rect = scoreVal.getBoundingClientRect();
+  el.style.left = (rect.left + rect.width / 2) + "px";
+  el.style.top  = rect.top + "px";
+
+  document.body.appendChild(el);
+  el.addEventListener("animationend", () => el.remove());
+}
+
+/* ─────────────────────────────────────────────────────────
+   9. SIGUIENTE RONDA
+───────────────────────────────────────────────────────── */
+function nextRound() {
+  questionSection.style.display = "none";
+
+  if (state.round >= TOTAL_ROUNDS) {
+    endGame();
+    return;
+  }
+
+  state.round++;
+  updateHUD();
+  btnSpin.disabled = false;
+}
+
+/* ─────────────────────────────────────────────────────────
+   10. FIN DEL JUEGO
+───────────────────────────────────────────────────────── */
+function endGame() {
+  wheelSection.style.display   = "none";
+  questionSection.style.display = "none";
+  resultsScreen.style.display  = "block";
+
+  const maxScore = TOTAL_ROUNDS * POINTS_PER_Q;
+  const pct      = state.score / maxScore;
+
+  let emoji, title, sub;
+  if (pct === 1) {
+    emoji = "🏆"; title = "¡Puntuación perfecta!";
+    sub   = "Eres un experto en aplicaciones ofimáticas. ¡100 de 100!";
+  } else if (pct >= 0.8) {
+    emoji = "🥇"; title = "¡Excelente resultado!";
+    sub   = "Casi perfecto. Repasa los temas fallados y vuelve a intentarlo.";
+  } else if (pct >= 0.5) {
+    emoji = "🥈"; title = "¡Buen intento!";
+    sub   = "Vas por buen camino. Un poco más de práctica y lo clavarás.";
+  } else {
+    emoji = "📚"; title = "¡Sigue practicando!";
+    sub   = "Hay margen de mejora. Revisa el material y vuelve a intentarlo.";
+  }
+
+  document.getElementById("result-emoji").textContent    = emoji;
+  document.getElementById("result-title").textContent    = title;
+  document.getElementById("result-sub").textContent      = sub;
+  document.getElementById("result-score-big").textContent = state.score;
+  document.getElementById("rb-correct").textContent      = state.correct;
+  document.getElementById("rb-wrong").textContent        = state.wrong;
+
+  resultsScreen.scrollIntoView({ behavior: "smooth" });
+}
+
+/* ─────────────────────────────────────────────────────────
+   11. HUD (marcador y progreso)
+───────────────────────────────────────────────────────── */
+function updateHUD() {
+  scoreVal.textContent = state.score;
+  roundVal.textContent = `${state.round} / ${TOTAL_ROUNDS}`;
+
+  const pct = ((state.round - 1) / TOTAL_ROUNDS) * 100;
+  progressFill.style.width = pct + "%";
+}
+
+/* ─────────────────────────────────────────────────────────
+   12. REINICIO
+───────────────────────────────────────────────────────── */
+function restartGame() {
+  state = {
+    score: 0, round: 1, spinning: false, answered: false,
+    correct: 0, wrong: 0, usedQuestions: {},
+    currentQuestion: null, wheelAngle: 0
+  };
+
+  updateHUD();
+  drawWheel(0);
+
+  resultsScreen.style.display   = "none";
+  wheelSection.style.display    = "flex";
+  questionSection.style.display = "none";
+  btnSpin.disabled = false;
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ─────────────────────────────────────────────────────────
+   13. EVENTOS
+───────────────────────────────────────────────────────── */
+btnSpin.addEventListener("click", () => {
+  if (state.spinning) return;
+  state.spinning = true;
+  btnSpin.disabled = true;
+
+  const catIdx = getRandomCategoryIndex();
+  spinWheel(catIdx);
+});
+
+btnNext.addEventListener("click", nextRound);
+btnRestart.addEventListener("click", restartGame);
+
+/* ─────────────────────────────────────────────────────────
+   14. INICIO
+───────────────────────────────────────────────────────── */
+updateHUD();
+drawWheel(0);
+</script>
+</body>
+</html>

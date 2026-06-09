@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EscapeLinux - Escape Room Informático</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Ubuntu', sans-serif;
+    background: #2c001e;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ===== PANTALLA INICIO ===== */
+  #splash {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #1a0010 0%, #2c001e 50%, #0d1117 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 9999;
+    color: white;
+  }
+  #splash h1 {
+    font-size: 3rem; font-weight: 700; letter-spacing: -1px;
+    background: linear-gradient(90deg, #ff6600, #e95420, #ff9900);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+  #splash p { color: #aaa; margin-bottom: 2rem; font-size: 1.1rem; }
+  #splash .story {
+    max-width: 520px; text-align: center; color: #ccc; line-height: 1.7;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; font-size: 0.95rem;
+  }
+  #splash .story strong { color: #ff6600; }
+  #btn-start {
+    background: #e95420; color: white; border: none; border-radius: 8px;
+    padding: 14px 48px; font-size: 1.1rem; font-family: 'Ubuntu', sans-serif;
+    cursor: pointer; font-weight: 500; transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(233,84,32,0.4);
+  }
+  #btn-start:hover { background: #f96835; transform: translateY(-2px); box-shadow: 0 6px 28px rgba(233,84,32,0.5); }
+
+  /* ===== DESKTOP ===== */
+  #desktop {
+    width: 100vw; height: 100vh;
+    background: #300a24;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(233,84,32,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(100,0,80,0.15) 0%, transparent 50%);
+    position: relative; display: none;
+  }
+
+  /* Wallpaper grid sutil */
+  #desktop::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.02) 39px, rgba(255,255,255,0.02) 40px),
+                      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.02) 39px, rgba(255,255,255,0.02) 40px);
+    pointer-events: none;
+  }
+
+  /* ===== PANEL SUPERIOR ===== */
+  #topbar {
+    position: absolute; top: 0; left: 0; right: 0; height: 28px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px; color: white; font-size: 13px; z-index: 100;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  #topbar .left { display: flex; align-items: center; gap: 16px; }
+  #topbar .right { display: flex; align-items: center; gap: 12px; }
+  #clock { font-family: 'Ubuntu Mono', monospace; font-size: 13px; }
+  .top-icon { font-size: 15px; cursor: pointer; opacity: 0.8; }
+  #timer-display {
+    font-family: 'Ubuntu Mono', monospace; font-size: 13px;
+    color: #ff9900; font-weight: 700;
+    background: rgba(255,153,0,0.1); padding: 1px 8px; border-radius: 4px;
+    border: 1px solid rgba(255,153,0,0.3);
+  }
+  #timer-display.urgent { color: #ff3333; border-color: rgba(255,51,51,0.5); background: rgba(255,51,51,0.1); animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* ===== ICONOS ESCRITORIO ===== */
+  .desktop-icon {
+    position: absolute;
+    display: flex; flex-direction: column; align-items: center;
+    width: 80px; cursor: pointer; padding: 6px; border-radius: 8px;
+    transition: background 0.15s;
+  }
+  .desktop-icon:hover { background: rgba(255,255,255,0.1); }
+  .desktop-icon .icon-img {
+    width: 52px; height: 52px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin-bottom: 6px; position: relative;
+  }
+  .desktop-icon .icon-label {
+    color: white; font-size: 12px; text-align: center; line-height: 1.3;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    word-break: break-word;
+  }
+
+  /* Terminal icon */
+  .icon-terminal .icon-img { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #0f3460; }
+  /* Notas icon */
+  .icon-notas .icon-img { background: linear-gradient(135deg, #f9ca24, #f0932b); }
+  /* Buscaminas icon */
+  .icon-minas .icon-img { background: #dc143c; border: 2px solid #gold; overflow: hidden; }
+
+  /* ===== VENTANAS ===== */
+  .window {
+    position: absolute; background: #f0f0f0; border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    min-width: 400px; display: none; flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.1); overflow: hidden;
+    z-index: 200;
+  }
+  .window.active { display: flex; }
+  .window-titlebar {
+    background: #300a24; color: white;
+    height: 32px; display: flex; align-items: center; padding: 0 10px; gap: 8px;
+    cursor: move; flex-shrink: 0;
+  }
+  .window-titlebar .title-text { flex: 1; font-size: 13px; font-weight: 400; }
+  .win-btn {
+    width: 14px; height: 14px; border-radius: 50%; border: none; cursor: pointer; flex-shrink: 0;
+  }
+  .win-close { background: #e74c3c; }
+  .win-min { background: #f39c12; }
+  .win-max { background: #2ecc71; }
+  .win-btn:hover { filter: brightness(0.8); }
+
+  /* ===== TERMINAL ===== */
+  #terminal-window { width: 700px; top: 80px; left: 60px; }
+  #terminal-body {
+    background: #1a1a1a; flex: 1; padding: 12px;
+    font-family: 'Ubuntu Mono', monospace; font-size: 14px; color: #00ff41;
+    overflow-y: auto; min-height: 380px; max-height: 450px;
+  }
+  .term-line { margin: 1px 0; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+  .term-prompt { color: #00ff41; }
+  .term-prompt .user { color: #e95420; }
+  .term-prompt .host { color: #00aaff; }
+  .term-prompt .path { color: #f0e68c; }
+  .term-output { color: #cccccc; }
+  .term-error { color: #ff4444; }
+  .term-success { color: #00ff41; }
+  .term-info { color: #00bfff; }
+  .term-highlight { color: #ffff00; }
+  #term-input-line {
+    display: flex; align-items: center; padding: 4px 0;
+  }
+  #term-input {
+    background: transparent; border: none; outline: none;
+    font-family: 'Ubuntu Mono', monospace; font-size: 14px; color: #00ff41;
+    flex: 1; caret-color: #00ff41;
+  }
+
+  /* ===== NOTAS ===== */
+  #notas-window { width: 500px; top: 100px; left: 200px; z-index: 201; }
+  #notas-body {
+    background: #fffef0; flex: 1; padding: 20px;
+    font-family: 'Ubuntu Mono', monospace; font-size: 13px;
+    color: #333; min-height: 400px; overflow-y: auto; line-height: 1.8;
+  }
+  .nota-titulo { font-size: 16px; font-weight: 700; color: #e95420; border-bottom: 2px solid #e95420; padding-bottom: 6px; margin-bottom: 14px; }
+  .nota-seccion { font-weight: 700; color: #300a24; margin-top: 12px; margin-bottom: 4px; }
+  .nota-tarea { background: #fff3cd; border-left: 3px solid #f0932b; padding: 6px 10px; margin: 4px 0; border-radius: 0 4px 4px 0; }
+  .nota-tarea.done { background: #d4edda; border-color: #28a745; text-decoration: line-through; color: #666; }
+  .nota-pista { color: #666; font-size: 12px; font-style: italic; }
+  .nota-sep { border: none; border-top: 1px dashed #ccc; margin: 10px 0; }
+
+  /* ===== BUSCAMINAS ===== */
+  #minas-window { width: 360px; top: 120px; left: 500px; z-index: 202; }
+  #minas-body { background: #c0c0c0; padding: 10px; min-height: 300px; }
+  #minas-header {
+    background: #c0c0c0; border: 2px solid; border-color: #fff #808080 #808080 #fff;
+    padding: 6px 10px; display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  #minas-mine-count, #minas-time-count {
+    background: #000; color: #f00; font-family: 'Ubuntu Mono', monospace;
+    font-size: 18px; padding: 2px 6px; letter-spacing: 2px; min-width: 52px; text-align: center;
+  }
+  #minas-face-btn {
+    background: #c0c0c0; border: 2px solid; border-color: #fff #808080 #808080 #fff;
+    width: 32px; height: 32px; font-size: 18px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; border-radius: 2px;
+  }
+  #minas-face-btn:active { border-color: #808080 #fff #fff #808080; }
+  #minas-grid {
+    display: inline-grid; grid-template-columns: repeat(9, 28px);
+    border: 2px solid; border-color: #808080 #fff #fff #808080;
+    gap: 0;
+  }
+  .mina-cell {
+    width: 28px; height: 28px; background: #c0c0c0;
+    border: 2px solid; border-color: #fff #808080 #808080 #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Ubuntu Mono', monospace; font-size: 13px; font-weight: 700;
+    cursor: pointer; user-select: none;
+  }
+  .mina-cell.revealed { border-color: #808080; border-width: 1px; background: #c0c0c0; }
+  .mina-cell.flagged { color: #f00; }
+  .mina-cell.mine-hit { background: #f00; }
+  .mina-cell.c1 { color: #0000ff; }
+  .mina-cell.c2 { color: #008000; }
+  .mina-cell.c3 { color: #ff0000; }
+  .mina-cell.c4 { color: #000080; }
+  .mina-cell.c5 { color: #800000; }
+  .mina-cell.c6 { color: #008080; }
+  .mina-cell.c7 { color: #800080; }
+  .mina-cell.c8 { color: #000000; }
+  #minas-msg { text-align: center; font-size: 12px; color: #444; margin-top: 6px; font-family: 'Ubuntu', sans-serif; min-height: 16px; }
+
+  /* ===== MODAL VICTORIA ===== */
+  #modal-win {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center; z-index: 9999;
+  }
+  #modal-win.active { display: flex; }
+  .modal-box {
+    background: #1a1a2e; border: 2px solid #e95420; border-radius: 16px;
+    padding: 3rem; text-align: center; max-width: 420px; width: 90%;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+  .modal-box h2 { color: #00ff41; font-size: 2rem; margin-bottom: 0.5rem; }
+  .modal-box .code-reveal {
+    font-size: 5rem; font-family: 'Ubuntu Mono', monospace;
+    color: #ff9900; font-weight: 700; letter-spacing: 16px;
+    margin: 1rem 0; text-shadow: 0 0 20px rgba(255,153,0,0.6);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{text-shadow: 0 0 20px rgba(255,153,0,0.6)} 50%{text-shadow: 0 0 40px rgba(255,153,0,1)} }
+  .modal-box p { color: #aaa; margin-bottom: 1.5rem; line-height: 1.6; }
+  .modal-box button {
+    background: #e95420; color: white; border: none; border-radius: 8px;
+    padding: 12px 36px; font-size: 1rem; cursor: pointer; font-family: 'Ubuntu', sans-serif;
+    font-weight: 500; transition: all 0.2s;
+  }
+  .modal-box button:hover { background: #f96835; transform: translateY(-2px); }
+
+  /* ===== MODAL GAMEOVER ===== */
+  #modal-lose {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center; z-index: 9999;
+  }
+  #modal-lose.active { display: flex; }
+  .modal-lose-box {
+    background: #1a0010; border: 2px solid #ff3333; border-radius: 16px;
+    padding: 3rem; text-align: center; max-width: 400px; width: 90%;
+    animation: popIn 0.4s ease;
+  }
+  .modal-lose-box h2 { color: #ff3333; font-size: 2rem; margin-bottom: 1rem; }
+  .modal-lose-box p { color: #aaa; margin-bottom: 1.5rem; line-height: 1.6; }
+  .modal-lose-box button {
+    background: #e95420; color: white; border: none; border-radius: 8px;
+    padding: 12px 36px; font-size: 1rem; cursor: pointer; font-family: 'Ubuntu', sans-serif;
+    font-weight: 500;
+  }
+
+  /* ===== TASKBAR ===== */
+  #taskbar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 44px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+    display: flex; align-items: center; padding: 0 8px; gap: 4px;
+    border-top: 1px solid rgba(255,255,255,0.08); z-index: 100;
+  }
+  .task-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+    color: white; border-radius: 6px; padding: 4px 12px;
+    font-size: 12px; cursor: pointer; font-family: 'Ubuntu', sans-serif;
+    display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .task-btn:hover { background: rgba(255,255,255,0.15); }
+  .task-btn.minimized { opacity: 0.5; }
+
+  /* ===== PROGRESO ===== */
+  #progress-bar {
+    position: absolute; bottom: 44px; left: 0; right: 0; height: 3px;
+    background: rgba(255,255,255,0.1);
+  }
+  #progress-fill {
+    height: 100%; background: #e95420; width: 0%; transition: width 0.5s ease;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SPLASH ===== -->
+<div id="splash">
+  <h1>🐧 EscapeLinux</h1>
+  <p>Escape Room · Temática Informática</p>
+  <div class="story">
+    <strong>MISIÓN:</strong> Eres un analista de sistemas. Alguien ha cifrado el código de acceso al servidor principal y lo ha ocultado en el sistema. Tienes <strong>7 minutos</strong> para explorarlo y recuperar el código de dos dígitos antes de que el sistema se bloquee automáticamente.
+    <br><br>
+    Empieza por leer <strong>notas.exe</strong> en el escritorio. La terminal será tu mejor herramienta.
+  </div>
+  <button id="btn-start">▶ INICIAR SESIÓN</button>
+</div>
+
+<!-- ===== DESKTOP ===== -->
+<div id="desktop">
+
+  <!-- Topbar -->
+  <div id="topbar">
+    <div class="left">
+      <span style="color:#e95420;font-weight:700">🐧 Ubuntu</span>
+      <span style="color:#aaa">Archivos</span>
+      <span style="color:#aaa">Aplicaciones</span>
+    </div>
+    <div class="right">
+      <span id="timer-display">03:00</span>
+      <span id="clock">12:00</span>
+    </div>
+  </div>
+
+  <!-- Iconos escritorio -->
+  <div class="desktop-icon icon-terminal" id="icon-terminal" style="top: 60px; left: 30px;" ondblclick="openTerminal()">
+    <div class="icon-img">
+      <span style="font-size:26px">💻</span>
+    </div>
+    <div class="icon-label">Terminal</div>
+  </div>
+
+  <div class="desktop-icon icon-notas" id="icon-notas" style="top: 170px; left: 30px;" ondblclick="openNotas()">
+    <div class="icon-img">
+      <span style="font-size:30px">📋</span>
+    </div>
+    <div class="icon-label">notas.exe</div>
+  </div>
+
+  <div class="desktop-icon icon-minas" id="icon-minas" style="top: 280px; left: 30px;" ondblclick="openMinas()">
+    <div class="icon-img" style="padding:0; overflow:hidden; border-radius:10px; border:2px solid #ccc;">
+      <svg width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="52" height="13" fill="#c60b1e"/>
+        <rect x="0" y="13" width="52" height="26" fill="#ffc400"/>
+        <rect x="0" y="39" width="52" height="13" fill="#c60b1e"/>
+        <!-- Escudo simplificado -->
+        <rect x="19" y="17" width="14" height="18" rx="2" fill="#c60b1e" stroke="#8B0000" stroke-width="0.8"/>
+        <rect x="19" y="17" width="7" height="18" rx="0" fill="#c60b1e"/>
+        <rect x="26" y="17" width="7" height="18" rx="0" fill="#ffc400" opacity="0.6"/>
+        <rect x="19" y="17" width="14" height="18" rx="2" fill="none" stroke="#8B0000" stroke-width="1"/>
+        <!-- Corona -->
+        <polygon points="22,15 26,12 30,15" fill="#ffc400" stroke="#c8960c" stroke-width="0.5"/>
+        <rect x="23" y="12" width="6" height="3" rx="1" fill="#ffc400" stroke="#c8960c" stroke-width="0.5"/>
+      </svg>
+    </div>
+    <div class="icon-label">Marcos Buscaminitas</div>
+  </div>
+
+  <!-- VENTANA TERMINAL -->
+  <div class="window" id="terminal-window">
+    <div class="window-titlebar" id="terminal-titlebar">
+      <button class="win-btn win-close" onclick="closeWin('terminal-window')"></button>
+      <button class="win-btn win-min" onclick="minWin('terminal-window','task-terminal')"></button>
+      <button class="win-btn win-max"></button>
+      <span class="title-text">usuario@escape-room: ~</span>
+    </div>
+    <div id="terminal-body" onclick="focusInput()">
+      <div id="term-output"></div>
+      <div id="term-input-line">
+        <span class="term-prompt"><span class="user">usuario</span>@<span class="host">escape-room</span>:<span class="path">~</span>$ </span>
+        <input id="term-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" />
+      </div>
+    </div>
+  </div>
+
+  <!-- VENTANA NOTAS -->
+  <div class="window" id="notas-window">
+    <div class="window-titlebar" id="notas-titlebar">
+      <button class="win-btn win-close" onclick="closeWin('notas-window')"></button>
+      <button class="win-btn win-min" onclick="minWin('notas-window','task-notas')"></button>
+      <button class="win-btn win-max"></button>
+      <span class="title-text">📋 notas.exe — Bloc de Notas</span>
+    </div>
+    <div id="notas-body">
+      <div class="nota-titulo">🔐 INSTRUCCIONES DEL ESCAPE ROOM</div>
+      <div class="nota-pista">Archivo creado por: root | Sistema cifrado | Urge recuperar código</div>
+      <hr class="nota-sep">
+      <div class="nota-seccion">📌 OBJETIVO</div>
+      <p style="margin:4px 0 10px; color:#555; font-size:12px;">Debes obtener un código de 2 dígitos ejecutando las siguientes tareas en la Terminal. Las tareas deben realizarse en orden.</p>
+
+      <div class="nota-seccion">✅ TAREAS A COMPLETAR:</div>
+
+      <div class="nota-tarea" id="nota-t1">
+        <b>TAREA 1:</b> Muestra el contenido del archivo <code>secreto.txt</code>
+      </div>
+
+      <div class="nota-tarea" id="nota-t2">
+        <b>TAREA 2:</b> Lista todos los archivos ocultos del directorio actual
+      </div>
+
+      <div class="nota-tarea" id="nota-t3">
+        <b>TAREA 3:</b> Lee el archivo oculto <code>.clave_oculta</code>
+      </div>
+
+      <div class="nota-tarea" id="nota-t4">
+        <b>TAREA 4:</b> Ejecuta el script <code>./descifrar.sh</code>
+      </div>
+
+      <div class="nota-tarea" id="nota-t5">
+        <b>TAREA 5:</b> Mira el historial de comandos con <code>history</code>
+      </div>
+
+      <div class="nota-tarea" id="nota-t6">
+        <b>TAREA 6 (FINAL):</b> Introduce el código usando: <code>unlock [código]</code>
+      </div>
+
+      <hr class="nota-sep">
+      <p style="color:#e95420; font-size:12px; font-weight:bold;">⚠️ Tiempo límite: 7 minutos. ¡El sistema se bloqueará!</p>
+    </div>
+  </div>
+
+  <!-- VENTANA BUSCAMINAS -->
+  <div class="window" id="minas-window">
+    <div class="window-titlebar" id="minas-titlebar">
+      <button class="win-btn win-close" onclick="closeWin('minas-window')"></button>
+      <button class="win-btn win-min" onclick="minWin('minas-window','task-minas')"></button>
+      <button class="win-btn win-max"></button>
+      <span class="title-text">🇪🇸 Marcos Buscaminitas</span>
+    </div>
+    <div id="minas-body">
+      <div id="minas-header">
+        <div id="minas-mine-count">010</div>
+        <button id="minas-face-btn" onclick="resetMinas()">🙂</button>
+        <div id="minas-time-count">000</div>
+      </div>
+      <div id="minas-grid"></div>
+      <div id="minas-msg">Clic izquierdo: descubrir | Clic derecho: bandera</div>
+    </div>
+  </div>
+
+  <!-- Taskbar -->
+  <div id="taskbar">
+    <span style="color:#e95420;font-size:18px;margin-right:4px">🐧</span>
+    <button class="task-btn" id="task-terminal" onclick="toggleWin('terminal-window','task-terminal')">💻 Terminal</button>
+    <button class="task-btn" id="task-notas" onclick="toggleWin('notas-window','task-notas')">📋 notas.exe</button>
+    <button class="task-btn" id="task-minas" onclick="toggleWin('minas-window','task-minas')">🇪🇸 Marcos Buscaminitas</button>
+  </div>
+
+  <!-- Progress bar -->
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+</div>
+
+<!-- MODAL VICTORIA -->
+<div id="modal-win">
+  <div class="modal-box">
+    <h2>🎉 ¡CÓDIGO DESCIFRADO!</h2>
+    <div class="code-reveal">23</div>
+    <p>¡Enhorabuena! Has conseguido recuperar el código de acceso al servidor principal. El sistema ha sido desbloqueado correctamente.</p>
+    <p style="font-size:12px;color:#666" id="win-time-msg"></p>
+    <button onclick="location.reload()">↺ Jugar de nuevo</button>
+  </div>
+</div>
+
+<!-- MODAL GAME OVER -->
+<div id="modal-lose">
+  <div class="modal-lose-box">
+    <h2>💀 TIEMPO AGOTADO</h2>
+    <p>El sistema se ha bloqueado automáticamente. El código nunca fue recuperado. Intenta de nuevo — esta vez más rápido.</p>
+    <button onclick="location.reload()">↺ Intentar de nuevo</button>
+  </div>
+</div>
+
+<script>
+// ======= ESTADO DEL JUEGO =======
+const STATE = {
+  tasks: [false, false, false, false, false, false],
+  timeLeft: 420,
+  timerInterval: null,
+  minaTimer: null,
+  gameActive: false,
+  minaTime: 0,
+  historyShown: false,
+  unlockAttempts: 0
+};
+
+// ======= FICHEROS VIRTUALES =======
+const FILES = {
+  'secreto.txt': `Archivo del sistema cifrado.
+Fecha: 2024-01-15
+Autor: admin
+
+REGISTRO DE ACCESO:
+> Primera parte del código: "2"
+> La segunda parte está oculta...
+
+Busca en los archivos ocultos del sistema.
+Nota: recuerda que los archivos ocultos empiezan por "."`,
+  '.clave_oculta': `[ARCHIVO OCULTO - NIVEL 2]
+
+Has encontrado el archivo oculto. ¡Bien hecho!
+
+Fragmento de clave: "3"
+
+Pero... ¿cómo se combinan? Ejecuta el script
+de descifrado para averiguarlo: ./descifrar.sh`,
+  'descifrar.sh': `#!/bin/bash
+# Script de descifrado - Sistema EscapeLinux
+echo "Iniciando protocolo de descifrado..."
+sleep 1
+echo "Fragmento A: 2"
+echo "Fragmento B: 3"
+echo "Combinación: [A][B] = ??"
+echo "Código guardado en historial del sistema."`,
+  'README.md': `# Directorio de usuario
+Bienvenido al sistema EscapeLinux.
+Lee notas.exe para las instrucciones.`
+};
+
+const HIDDEN_FILES = ['.clave_oculta', '.bash_history', '.profile'];
+const ALL_FILES = ['secreto.txt', 'descifrar.sh', 'README.md', 'notas.exe'];
+
+const HISTORY_LOG = [
+  '  1  ls -la',
+  '  2  cat README.md',
+  '  3  nano secreto.txt',
+  '  4  chmod +x descifrar.sh',
+  '  5  echo "codigo_prueba=23" >> .bash_history',
+  '  6  cat .clave_oculta',
+  '  7  # NOTA SISTEMA: codigo_acceso=23',
+  '  8  clear',
+];
+
+// ======= ARRANQUE =======
+document.getElementById('btn-start').addEventListener('click', startGame);
+
+function startGame() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('desktop').style.display = 'block';
+  STATE.gameActive = true;
+  startTimer();
+  updateClock();
+  setInterval(updateClock, 1000);
+  openTerminal();
+  openNotas();
+  printWelcome();
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+// ======= TIMER =======
+function startTimer() {
+  STATE.timerInterval = setInterval(() => {
+    STATE.timeLeft--;
+    updateTimerDisplay();
+    const pct = ((420 - STATE.timeLeft) / 420) * 100;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    if (STATE.timeLeft <= 0) {
+      clearInterval(STATE.timerInterval);
+      gameOver();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(STATE.timeLeft / 60).toString().padStart(2,'0');
+  const s = (STATE.timeLeft % 60).toString().padStart(2,'0');
+  const el = document.getElementById('timer-display');
+  el.textContent = m + ':' + s;
+  el.className = STATE.timeLeft <= 30 ? 'urgent' : '';
+}
+
+function gameOver() {
+  STATE.gameActive = false;
+  document.getElementById('modal-lose').classList.add('active');
+}
+
+// ======= VENTANAS =======
+function openTerminal() {
+  document.getElementById('terminal-window').classList.add('active');
+  focusInput();
+  makeWindowDraggable('terminal-window', 'terminal-titlebar');
+}
+function openNotas() {
+  document.getElementById('notas-window').classList.add('active');
+  makeWindowDraggable('notas-window', 'notas-titlebar');
+}
+function openMinas() {
+  document.getElementById('minas-window').classList.add('active');
+  makeWindowDraggable('minas-window', 'minas-titlebar');
+  initMinas();
+}
+function closeWin(id) {
+  document.getElementById(id).classList.remove('active');
+}
+function minWin(id, taskId) {
+  document.getElementById(id).classList.remove('active');
+}
+function toggleWin(id, taskId) {
+  const win = document.getElementById(id);
+  if (win.classList.contains('active')) {
+    win.classList.remove('active');
+  } else {
+    win.classList.add('active');
+    if (id === 'minas-window') initMinas();
+    if (id === 'terminal-window') focusInput();
+  }
+}
+
+function makeWindowDraggable(winId, barId) {
+  const win = document.getElementById(winId);
+  const bar = document.getElementById(barId);
+  if (bar._dragInit) return;
+  bar._dragInit = true;
+  let ox, oy, sx, sy;
+  bar.addEventListener('mousedown', e => {
+    if (e.target.classList.contains('win-btn')) return;
+    ox = win.offsetLeft; oy = win.offsetTop;
+    sx = e.clientX; sy = e.clientY;
+    const onMove = ev => {
+      win.style.left = (ox + ev.clientX - sx) + 'px';
+      win.style.top  = (oy + ev.clientY - sy) + 'px';
+    };
+    const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
+// ======= TERMINAL =======
+function focusInput() { document.getElementById('term-input').focus(); }
+
+function printWelcome() {
+  print('info', '╔══════════════════════════════════════════════╗');
+  print('info', '║        EscapeLinux Terminal v3.14.0         ║');
+  print('info', '║     Sistema de Recuperación de Código       ║');
+  print('info', '╚══════════════════════════════════════════════╝');
+  print('output', '');
+  print('success', 'Bienvenido, usuario. Sesión iniciada.');
+  print('output', 'Escribe "help" para ver los comandos disponibles.');
+  print('output', 'Lee notas.exe para obtener las instrucciones.');
+  print('output', '');
+}
+
+function print(type, text) {
+  const out = document.getElementById('term-output');
+  const line = document.createElement('div');
+  line.className = 'term-line term-' + type;
+  line.textContent = text;
+  out.appendChild(line);
+  const body = document.getElementById('terminal-body');
+  body.scrollTop = body.scrollHeight;
+}
+
+function printHTML(html) {
+  const out = document.getElementById('term-output');
+  const line = document.createElement('div');
+  line.className = 'term-line term-output';
+  line.innerHTML = html;
+  out.appendChild(line);
+  document.getElementById('terminal-body').scrollTop = 99999;
+}
+
+document.getElementById('term-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const cmd = e.target.value.trim();
+    e.target.value = '';
+    if (!cmd) return;
+    // Echo prompt
+    const out = document.getElementById('term-output');
+    const line = document.createElement('div');
+    line.className = 'term-line';
+    line.innerHTML = `<span class="term-prompt"><span class="user">usuario</span>@<span class="host">escape-room</span>:<span class="path">~</span>$ </span><span style="color:#fff">${escHTML(cmd)}</span>`;
+    out.appendChild(line);
+    processCommand(cmd);
+  }
+});
+
+function escHTML(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function processCommand(raw) {
+  const parts = raw.trim().split(/\s+/);
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
+
+  if (!STATE.gameActive) { print('error','Sistema bloqueado.'); return; }
+
+  switch(cmd) {
+    case 'help':
+      print('info','Comandos disponibles:');
+      print('output','  ls        - listar archivos');
+      print('output','  ls -la    - listar archivos (incluyendo ocultos)');
+      print('output','  cat <f>   - leer un archivo');
+      print('output','  ./descifrar.sh - ejecutar script');
+      print('output','  history   - ver historial de comandos');
+      print('output','  unlock <código> - introducir código final');
+      print('output','  clear     - limpiar pantalla');
+      print('output','  pwd       - mostrar directorio actual');
+      print('output','  whoami    - mostrar usuario');
+      print('output','  date      - mostrar fecha del sistema');
+      break;
+
+    case 'clear':
+      document.getElementById('term-output').innerHTML = '';
+      break;
+
+    case 'pwd':
+      print('output', '/home/usuario');
+      break;
+
+    case 'whoami':
+      print('output', 'usuario');
+      break;
+
+    case 'date':
+      print('output', new Date().toString());
+      break;
+
+    case 'ls':
+      if (args.includes('-la') || args.includes('-al') || (args.includes('-l') && args.includes('-a'))) {
+        // ls -la → muestra ocultos
+        print('output','total 48');
+        print('output','drwxr-xr-x  2 usuario usuario 4096 ene 15 09:00 .');
+        print('output','drwxr-xr-x 18 root     root    4096 ene 15 08:00 ..');
+        print('highlight','-rw-r--r--  1 usuario usuario  512 ene 15 09:00 .clave_oculta');
+        print('output', '-rw-r--r--  1 usuario usuario  128 ene 15 08:45 .bash_history');
+        print('output', '-rw-r--r--  1 usuario usuario   64 ene 15 08:00 .profile');
+        print('output', '-rwxr-xr-x  1 usuario usuario  256 ene 15 09:00 descifrar.sh');
+        print('output', '-rw-r--r--  1 usuario usuario   80 ene 15 09:00 README.md');
+        print('highlight','-rw-r--r--  1 usuario usuario  320 ene 15 09:00 secreto.txt');
+        print('output', '-rw-r--r--  1 usuario usuario   48 ene 15 09:00 notas.exe');
+        markTask(1);
+      } else if (args.length === 0 || args[0] === '-l') {
+        ALL_FILES.forEach(f => print('output', f));
+      } else {
+        print('error', `ls: '${args[0]}': No such file or directory`);
+      }
+      break;
+
+    case 'cat':
+      if (args.length === 0) { print('error', 'cat: falta nombre de archivo'); break; }
+      const fname = args[0];
+      if (fname === 'secreto.txt') {
+        FILES['secreto.txt'].split('\n').forEach(l => print('output', l));
+        markTask(0);
+      } else if (fname === '.clave_oculta') {
+        if (!STATE.tasks[1]) {
+          print('error', 'cat: .clave_oculta: Permiso denegado (¿Has buscado los archivos ocultos primero?)');
+        } else {
+          FILES['.clave_oculta'].split('\n').forEach(l => print('output', l));
+          markTask(2);
+        }
+      } else if (FILES[fname]) {
+        FILES[fname].split('\n').forEach(l => print('output', l));
+      } else if (fname === 'notas.exe') {
+        print('info', 'Abriendo notas.exe en visor gráfico...');
+        openNotas();
+      } else {
+        print('error', `cat: ${fname}: No existe el fichero o el directorio`);
+      }
+      break;
+
+    case './descifrar.sh':
+    case 'bash':
+    case 'sh':
+      const scriptArg = args[0];
+      if (cmd === './descifrar.sh' || scriptArg === 'descifrar.sh') {
+        if (!STATE.tasks[2]) {
+          print('error','./descifrar.sh: Permission denied (¿Has leído .clave_oculta primero?)');
+        } else {
+          print('success','Iniciando protocolo de descifrado...');
+          setTimeout(() => print('output','[■■■□□□□□□□] 30%...'), 400);
+          setTimeout(() => print('output','[■■■■■■□□□□] 60%...'), 900);
+          setTimeout(() => {
+            print('output','[■■■■■■■■■■] 100% - Completado');
+            print('output','');
+            print('highlight','>>> Fragmento A: 2');
+            print('highlight','>>> Fragmento B: 3');
+            print('output','>>> Combinación: PRIMERA CIFRA + SEGUNDA CIFRA');
+            print('success','>>> Código guardado en historial del sistema.');
+            print('output','');
+            markTask(3);
+          }, 1500);
+        }
+      } else {
+        print('error', `bash: ${raw}: No existe el fichero`);
+      }
+      break;
+
+    case 'history':
+      if (!STATE.tasks[3]) {
+        HISTORY_LOG.slice(0,4).forEach(l => print('output', l));
+        print('info','... (ejecuta ./descifrar.sh antes para ver el historial completo)');
+      } else {
+        HISTORY_LOG.forEach(l => {
+          if (l.includes('23')) {
+            print('highlight', l);
+          } else {
+            print('output', l);
+          }
+        });
+        print('highlight','  # → El código aparece en el historial: 23');
+        markTask(4);
+      }
+      break;
+
+    case 'unlock':
+      if (args.length === 0) { print('error','unlock: falta el código. Uso: unlock <código>'); break; }
+      const code = args[0];
+      STATE.unlockAttempts++;
+      if (code === '23') {
+        print('success', '');
+        print('success', '███████████████████████████████');
+        print('success', '█  CÓDIGO CORRECTO: 23        █');
+        print('success', '█  SISTEMA DESBLOQUEADO ✓     █');
+        print('success', '███████████████████████████████');
+        markTask(5);
+        setTimeout(winGame, 1000);
+      } else {
+        print('error', `unlock: código "${code}" incorrecto. Inténtalo de nuevo.`);
+      }
+      break;
+
+    case 'sudo':
+      print('error', '[sudo] contraseña para usuario: ');
+      setTimeout(() => print('error', 'usuario no está en el archivo sudoers. Este incidente será reportado.'), 800);
+      break;
+
+    case 'nano': case 'vim': case 'vi':
+      print('error', `${cmd}: interfaz gráfica no disponible en este modo. Usa cat para leer.`);
+      break;
+
+    case 'cd':
+      if (!args[0] || args[0] === '~' || args[0] === '/home/usuario') {
+        print('output', '');
+      } else {
+        print('error', `cd: ${args[0]}: No such file or directory`);
+      }
+      break;
+
+    case 'echo':
+      print('output', args.join(' '));
+      break;
+
+    case 'whoami':
+      print('output','usuario');
+      break;
+
+    case 'uname':
+      print('output','Linux escape-room 5.15.0-ubuntu #1 SMP Ubuntu 22.04 x86_64 GNU/Linux');
+      break;
+
+    default:
+      print('error', `${cmd}: command not found. Escribe "help" para ver comandos disponibles.`);
+  }
+}
+
+function markTask(index) {
+  if (STATE.tasks[index]) return;
+  STATE.tasks[index] = true;
+  const ids = ['nota-t1','nota-t2','nota-t3','nota-t4','nota-t5','nota-t6'];
+  const el = document.getElementById(ids[index]);
+  if (el) el.classList.add('done');
+}
+
+function winGame() {
+  STATE.gameActive = false;
+  clearInterval(STATE.timerInterval);
+  const elapsed = 420 - STATE.timeLeft;
+  const m = Math.floor(elapsed/60), s = elapsed%60;
+  document.getElementById('win-time-msg').textContent =
+    `Tiempo empleado: ${m}m ${s}s — ¡Excelente rendimiento!`;
+  document.getElementById('modal-win').classList.add('active');
+}
+
+// ======= BUSCAMINAS =======
+const MINAS_ROWS = 9, MINAS_COLS = 9, MINAS_COUNT = 10;
+let minaBoard = [], minaRevealed = [], minaFlagged = [], minaGameOver = false, minaStarted = false;
+
+function initMinas() {
+  minaBoard = Array.from({length:MINAS_ROWS},()=>Array(MINAS_COLS).fill(0));
+  minaRevealed = Array.from({length:MINAS_ROWS},()=>Array(MINAS_COLS).fill(false));
+  minaFlagged = Array.from({length:MINAS_ROWS},()=>Array(MINAS_COLS).fill(false));
+  minaGameOver = false; minaStarted = false;
+  clearInterval(STATE.minaTimer);
+  STATE.minaTime = 0;
+  document.getElementById('minas-time-count').textContent = '000';
+  document.getElementById('minas-mine-count').textContent = MINAS_COUNT.toString().padStart(3,'0');
+  document.getElementById('minas-face-btn').textContent = '🙂';
+  document.getElementById('minas-msg').textContent = 'Clic izquierdo: descubrir | Clic derecho: bandera';
+  placeMinas();
+  renderMinasGrid();
+}
+
+function placeMinas() {
+  let placed = 0;
+  while(placed < MINAS_COUNT) {
+    const r = Math.floor(Math.random()*MINAS_ROWS);
+    const c = Math.floor(Math.random()*MINAS_COLS);
+    if (minaBoard[r][c] !== -1) { minaBoard[r][c] = -1; placed++; }
+  }
+  for(let r=0;r<MINAS_ROWS;r++) for(let c=0;c<MINAS_COLS;c++) {
+    if(minaBoard[r][c]===-1) continue;
+    let cnt=0;
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<MINAS_ROWS&&nc>=0&&nc<MINAS_COLS&&minaBoard[nr][nc]===-1) cnt++;
+    }
+    minaBoard[r][c]=cnt;
+  }
+}
+
+function renderMinasGrid() {
+  const grid = document.getElementById('minas-grid');
+  grid.innerHTML = '';
+  for(let r=0;r<MINAS_ROWS;r++) for(let c=0;c<MINAS_COLS;c++){
+    const cell = document.createElement('div');
+    cell.className = 'mina-cell';
+    cell.dataset.r = r; cell.dataset.c = c;
+    if(minaRevealed[r][c]) {
+      cell.classList.add('revealed');
+      const v = minaBoard[r][c];
+      if(v===-1) { cell.textContent='💣'; cell.classList.add('mine-hit'); }
+      else if(v>0) { cell.textContent=v; cell.classList.add('c'+v); }
+    } else if(minaFlagged[r][c]) {
+      cell.textContent='🚩'; cell.classList.add('flagged');
+    }
+    cell.addEventListener('click', e => minaClick(parseInt(e.target.closest('.mina-cell').dataset.r), parseInt(e.target.closest('.mina-cell').dataset.c)));
+    cell.addEventListener('contextmenu', e => { e.preventDefault(); minaFlag(parseInt(e.target.closest('.mina-cell').dataset.r), parseInt(e.target.closest('.mina-cell').dataset.c)); });
+    grid.appendChild(cell);
+  }
+}
+
+function minaClick(r,c) {
+  if(minaGameOver||minaRevealed[r][c]||minaFlagged[r][c]) return;
+  if(!minaStarted) { minaStarted=true; STATE.minaTimer=setInterval(()=>{ STATE.minaTime=Math.min(STATE.minaTime+1,999); document.getElementById('minas-time-count').textContent=STATE.minaTime.toString().padStart(3,'0'); },1000); }
+  if(minaBoard[r][c]===-1) {
+    minaRevealed[r][c]=true; minaGameOver=true;
+    clearInterval(STATE.minaTimer);
+    revealAllMines();
+    renderMinasGrid();
+    document.getElementById('minas-face-btn').textContent='😵';
+    document.getElementById('minas-msg').textContent='💥 ¡Pisaste una mina! Haz clic en 😵 para reiniciar.';
+    return;
+  }
+  minaReveal(r,c);
+  renderMinasGrid();
+  if(checkMinasWin()) {
+    clearInterval(STATE.minaTimer);
+    document.getElementById('minas-face-btn').textContent='😎';
+    document.getElementById('minas-msg').textContent='🎉 ¡Ganaste! Campo despejado.';
+  }
+}
+
+function minaReveal(r,c) {
+  if(r<0||r>=MINAS_ROWS||c<0||c>=MINAS_COLS||minaRevealed[r][c]||minaFlagged[r][c]) return;
+  minaRevealed[r][c]=true;
+  if(minaBoard[r][c]===0) {
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) minaReveal(r+dr,c+dc);
+  }
+}
+
+function minaFlag(r,c) {
+  if(minaGameOver||minaRevealed[r][c]) return;
+  minaFlagged[r][c]=!minaFlagged[r][c];
+  const flags = minaFlagged.flat().filter(Boolean).length;
+  document.getElementById('minas-mine-count').textContent=(MINAS_COUNT-flags).toString().padStart(3,'0');
+  renderMinasGrid();
+}
+
+function revealAllMines() {
+  for(let r=0;r<MINAS_ROWS;r++) for(let c=0;c<MINAS_COLS;c++) {
+    if(minaBoard[r][c]===-1) minaRevealed[r][c]=true;
+  }
+}
+
+function checkMinasWin() {
+  for(let r=0;r<MINAS_ROWS;r++) for(let c=0;c<MINAS_COLS;c++) {
+    if(minaBoard[r][c]!==-1&&!minaRevealed[r][c]) return false;
+  }
+  return true;
+}
+
+function resetMinas() { initMinas(); }
+</script>
+</body>
+</html>
